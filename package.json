@@ -1,0 +1,23 @@
+{
+  "name": "bebella-commerce",
+  "version": "1.0.0",
+  "description": "website para exposição de produtos e venda",
+  "homepage": "https://github.com/Projeto-PI-Unipam/bebella-ecommerce#readme",
+  "bugs": {
+    "url": "https://github.com/Projeto-PI-Unipam/bebella-ecommerce/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Projeto-PI-Unipam/bebella-ecommerce.git"
+  },
+  "license": "GPL-3.0",
+  "author": "Ana Luiza, Alexandre, Augusto, João Vitor e Raysson",
+  "type": "typescript",
+  "main": "main.ts",
+  "scripts": {
+    "test": "npm test"
+  },
+  "dependencies": {
+    "express-cassandra": "^2.5.0"
+  }
+}
