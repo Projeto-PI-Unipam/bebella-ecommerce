@@ -1,7 +1,12 @@
-# devenv
+# Devenv
 .devenv/
 devenv.*
 .pre-commit-config.yaml
+secretspec*
+
+# Extras
+.env*
+env*
 
 # Logs
 logs
