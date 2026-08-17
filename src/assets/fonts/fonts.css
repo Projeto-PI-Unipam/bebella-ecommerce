@@ -1,0 +1,8 @@
+@font-face {
+  font-family: "Boston Angel";
+  src:
+    url("./boston_angel_ttf/Boston\ Angel\ Regular.ttf"),
+    url("./boston_angel_ttf/Boston\ Angel\ Bold.ttf"),
+    url("./boston_angel_ttf/Boston\ Angel\ Light.ttf"),
+    url("./boston_angel_ttf/Boston\ Angel\ Medium.ttf");
+}

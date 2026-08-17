@@ -1,0 +1,26 @@
+:root {
+  --background-active: #f6bebf;
+  --foreground-prim: #ffffff;
+}
+
+.topbar {
+  width: 100%;
+  height: 60px;
+  background-color: var(--background-active);
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  margin: 0;
+  align-items: start;
+}
+
+.barlogo .mainlogo {
+  display: block;
+  align-self: center;
+  max-height: 80%;
+  width: 10.5%;
+  margin: 6px 0px 6px 0px;
+  position: absolute;
+  left: 44.75%;
+  right: 44.75%;
+}
