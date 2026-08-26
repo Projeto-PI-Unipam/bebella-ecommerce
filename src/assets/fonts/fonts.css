@@ -1,8 +1,94 @@
 @font-face {
   font-family: "Boston Angel";
-  src:
-    url("./boston_angel_ttf/Boston\ Angel\ Regular.ttf"),
-    url("./boston_angel_ttf/Boston\ Angel\ Bold.ttf"),
-    url("./boston_angel_ttf/Boston\ Angel\ Light.ttf"),
-    url("./boston_angel_ttf/Boston\ Angel\ Medium.ttf");
+  src: url("./boston_angel_ttf/Boston\ Angel\ Regular.ttf");
+}
+@font-face {
+  font-family: "Boston Angel";
+  src: url("./boston_angel_ttf/Boston\ Angel\ Bold.ttf");
+  font-weight: 700;
+}
+@font-face {
+  font-family: "Boston Angel";
+  src: url("./boston_angel_ttf/Boston\ Angel\ Light.ttf");
+  font-weight: 300;
+}
+@font-face {
+  font-family: "Boston Angel";
+  src: url("./boston_angel_ttf/Boston\ Angel\ Medium.ttf");
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: "NerdSymbols";
+  src: url("./nerd_symbols_ttf/SymbolsNerdFontMono-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Regular.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Italic.ttf");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Bold.ttf");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-BoldItalic.ttf");
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Semibold.ttf");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-SemiboldItalic.ttf");
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Medium.ttf");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-MediumItalic.ttf");
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-Light.ttf");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Prompt";
+  src: url("./prompt_ttf/PromptNerdFont-LightItalic.ttf");
+  font-weight: 300;
+  font-style: italic;
 }

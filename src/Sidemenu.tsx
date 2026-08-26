@@ -15,80 +15,75 @@ function Sidemenu() {
       <div
         className={isActive ? "wrapper dark" : "wrapper"}
         onClick={isActive || isReady ? () => activate(() => false) : () => null}
+      ></div>
+      <motion.div
+        className={isActive ? "sidemenu active" : "sidemenu inactive"}
+        animate={{
+          height: isActive ? "60%" : 0,
+          width: isActive ? "calc(max(30%, 300px)" : 0,
+        }}
+        onAnimationComplete={
+          isActive ? () => makeReady(() => true) : () => null
+        }
+        onAnimationStart={isActive ? () => null : () => makeReady(() => false)}
       >
         <motion.div
-          className={isActive ? "sidemenu active" : "sidemenu inactive"}
-          animate={{
-            height: isActive ? "60%" : 0,
-            width: isActive ? "calc(max(30%, 300px)" : 0,
+          style={{
+            alignContent: "center",
+            display: "flex",
+            height: 42,
+            width: "100%",
+            alignItems: "center",
+            borderTopRightRadius: "12px",
           }}
-          onAnimationComplete={
-            isActive ? () => makeReady(() => true) : () => null
-          }
-          onAnimationStart={
-            isActive ? () => null : () => makeReady(() => false)
-          }
+          animate={{
+            backgroundColor: isActive ? lightBgActive : pinkBgDefault,
+          }}
         >
-          <motion.div
+          <motion.button
             style={{
-              alignContent: "center",
-              display: "flex",
-              height: 42,
-              width: "100%",
-              alignItems: "center",
-              borderTopRightRadius: "12px",
+              verticalAlign: "middle",
+              top: 4,
+              left: 8,
+              borderStyle: "none",
             }}
             animate={{
               backgroundColor: isActive ? lightBgActive : pinkBgDefault,
             }}
+            onClick={() => activate((isActive) => !isActive)}
           >
-            <motion.button
-              style={{
-                verticalAlign: "middle",
-                top: 4,
-                left: 8,
-                borderStyle: "none",
-              }}
+            <motion.img
+              src={MBtn}
+              className="btnmenu"
               animate={{
-                backgroundColor: isActive ? lightBgActive : pinkBgDefault,
+                rotate: isActive ? 90 : 0,
               }}
-              onClick={() => activate((isActive) => !isActive)}
-            >
-              <motion.img
-                src={MBtn}
-                className="btnmenu"
-                animate={{
-                  rotate: isActive ? 90 : 0,
-                }}
-                whileHover={{ cursor: "pointer" }}
-              />
-            </motion.button>
-            <motion.p
-              style={{
-                display: "flex",
-                paddingBottom: 2,
-                paddingLeft: 8,
-                position: "relative",
-                textAlign: "center",
-                alignSelf: "center",
-                verticalAlign: "center",
-                //top: 12,
-                /*left: 64,*/
-                color: isReady
-                  ? "rgba(50, 50, 50, 255)"
-                  : "rgba(50, 50, 50, 0)",
-                visibility: isReady ? "visible" : "hidden",
-                textWrap: "nowrap",
-                fontSize: "calc(1.05rem + 0.4vh)",
-                fontWeight: "bold",
-                fontFamily: "Boston Angel",
-              }}
-            >
-              Busca por Departamentos
-            </motion.p>
-          </motion.div>
+              whileHover={{ cursor: "pointer" }}
+            />
+          </motion.button>
+          <motion.p
+            style={{
+              display: "flex",
+              paddingBottom: 2,
+              paddingLeft: 8,
+              position: "relative",
+              textAlign: "center",
+              alignSelf: "center",
+              verticalAlign: "center",
+              //top: 12,
+              /*left: 64,*/
+              color: isReady ? "rgba(50, 50, 50, 255)" : "rgba(50, 50, 50, 0)",
+              visibility: isReady ? "visible" : "hidden",
+              textWrap: "nowrap",
+              fontSize: "calc(1.05rem + 0.4vh)",
+              fontWeight: "bold",
+              fontFamily: "Boston Angel",
+            }}
+          >
+            Busca por Departamentos
+          </motion.p>
         </motion.div>
-      </div>
+      </motion.div>
     </>
   );
 }

@@ -19,8 +19,9 @@
 }
 
 .sidemenu {
-  position: fixed;
-  top: 2px;
+  position: absolute;
+  top: 4px;
+  z-index: 3;
 }
 
 .sidemenu.active {

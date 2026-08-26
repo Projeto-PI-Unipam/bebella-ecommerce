@@ -1,6 +1,10 @@
-//import { createState } from "react";
+import { useState } from "react";
+import { PageNavButton, PageNavIndicator } from "./PageButton";
 
-function ProductPage() {
+function SearchPage() {
+  //const backgroundActive = "#f6bebf";
+  //const activeBorder = "#904070";
+  const [currentPage, setPage] = useState(1);
   return (
     <>
       <div
@@ -32,11 +36,23 @@ function ProductPage() {
             placeSelf: "anchor-center",
             flexDirection: "row",
             position: "relative",
+            flexWrap: "nowrap",
+            alignItems: "anchor-center",
+            justifyContent: "center",
           }}
-        ></div>
+        >
+          <PageNavButton label="<" visibility={true} setter={setPage} />
+          <PageNavIndicator
+            label={currentPage}
+            visibility={true}
+            hspace={3}
+            setter={setPage}
+          />
+          <PageNavButton label=">" visibility={true} setter={setPage} />
+        </div>
       </div>
     </>
   );
 }
 
-export default ProductPage;
+export default SearchPage;
