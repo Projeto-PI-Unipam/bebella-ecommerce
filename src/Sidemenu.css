@@ -3,6 +3,10 @@
   --foreground-prim: #ffffff;
 }
 
+.wrapper {
+  z-index: 2;
+}
+
 .wrapper.dark {
   min-width: 100%;
   max-width: 100%;
@@ -20,7 +24,7 @@
 }
 
 .sidemenu.active {
-  display: flex;
+  display: flexbox;
   text-align: start;
   align-items: start;
   background-color: var(--background-active);
@@ -36,7 +40,7 @@
 }
 
 .sidemenu.inactive {
-  display: flex;
+  display: flexbox;
   text-align: start;
   align-items: start;
   background-color: var(--background-active);

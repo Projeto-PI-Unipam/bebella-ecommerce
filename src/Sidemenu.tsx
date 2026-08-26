@@ -20,7 +20,7 @@ function Sidemenu() {
           className={isActive ? "sidemenu active" : "sidemenu inactive"}
           animate={{
             height: isActive ? "60%" : 0,
-            width: isActive ? "30%" : 0,
+            width: isActive ? "calc(max(30%, 300px)" : 0,
           }}
           onAnimationComplete={
             isActive ? () => makeReady(() => true) : () => null
@@ -31,10 +31,11 @@ function Sidemenu() {
         >
           <motion.div
             style={{
-              display: "block",
-              height: 60,
+              alignContent: "center",
+              display: "flex",
+              height: 42,
               width: "100%",
-              alignItems: "start",
+              alignItems: "center",
               borderTopRightRadius: "12px",
             }}
             animate={{
@@ -43,9 +44,8 @@ function Sidemenu() {
           >
             <motion.button
               style={{
-                display: "block",
-                position: "absolute",
-                top: 8,
+                verticalAlign: "middle",
+                top: 4,
                 left: 8,
                 borderStyle: "none",
               }}
@@ -63,25 +63,29 @@ function Sidemenu() {
                 whileHover={{ cursor: "pointer" }}
               />
             </motion.button>
-            <motion.span
+            <motion.p
               style={{
-                display: "block",
+                display: "flex",
+                paddingBottom: 2,
+                paddingLeft: 8,
                 position: "relative",
                 textAlign: "center",
-                top: 12,
+                alignSelf: "center",
+                verticalAlign: "center",
+                //top: 12,
                 /*left: 64,*/
                 color: isReady
                   ? "rgba(50, 50, 50, 255)"
                   : "rgba(50, 50, 50, 0)",
                 visibility: isReady ? "visible" : "hidden",
                 textWrap: "nowrap",
-                fontSize: "calc(1.2rem + 0.5vmin)",
+                fontSize: "calc(1.05rem + 0.4vh)",
                 fontWeight: "bold",
                 fontFamily: "Boston Angel",
               }}
             >
               Busca por Departamentos
-            </motion.span>
+            </motion.p>
           </motion.div>
         </motion.div>
       </div>
