@@ -2,8 +2,27 @@ import dotenv from "dotenv";
 import path from "path";
 import { z } from "zod";
 
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ServerApiVersion, Db, Collection } from "mongodb";
+import { UUID } from "bson";
 import { BSON } from "mongodb";
+
+export type size = string | number;
+export const sizes = ["PP", "P", "M", "G", "GG"];
+
+export interface ClothesSize {
+  sname: size;
+  stock: number;
+}
+
+export interface ClothesModel {
+  name: string;
+  brand?: string;
+  category: string;
+  size_data: ClothesSize[];
+  description: string;
+  in_stock: number;
+  pic_url: string;
+}
 
 dotenv.config({
   path: path.resolve(process.cwd(), `.env`),
@@ -29,57 +48,34 @@ const mclient = new MongoClient(env.DATABASE_URL, {
     strict: true,
     deprecationErrors: true,
   },
+  pkFactory: { createPk: () => new UUID().toBinary() },
 });
 
 export async function connectMongo() {
   try {
     await mclient.connect();
+  } finally {
     const response = mclient.db("mongoc0");
     console.log("Connected to database");
     return response;
-  } finally {
-    await mclient.close();
   }
 }
 
 export const database = connectMongo().catch(console.dir);
-export type size = string | number;
-export const sizes = ["PP", "P", "M", "G", "GG"];
 
-export class ClothesSize {
-  sname: size;
-  stock: number;
-
-  constructor(sname: size, stock: number) {
-    this.sname = sname;
-    this.stock = stock;
-  }
+export async function createCollection(db: Db, collName: string) {
+  const newColl = await db.createCollection(collName).catch(console.dir);
+  return newColl;
 }
 
-export class ClothesModel {
-  name: string;
-  brand?: string;
-  category: string;
-  size_data: ClothesSize[];
-  description: string;
-  in_stock: number;
-  pic_url: string;
-
-  constructor(
-    name: string,
-    category: string,
-    size_data: ClothesSize[],
-    description: string,
-    in_stock: number,
-    pic_url: string,
-    brand?: string,
-  ) {
-    this.name = name;
-    this.brand = brand;
-    this.category = category;
-    this.size_data = size_data;
-    this.description = description;
-    this.in_stock = in_stock;
-    this.pic_url = pic_url;
-  }
+export async function addItem(coll: Collection, item: ClothesModel) {
+  const addResult = await coll.insertOne(item).catch(console.dir);
+  return addResult;
 }
+
+export async function getTotal(coll: Collection) {
+  const getRes = await coll.countDocuments({});
+  return getRes;
+}
+
+//export async function queryCollection(coll: Collection) {}
