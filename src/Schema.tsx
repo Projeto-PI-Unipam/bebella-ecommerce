@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { MongoClient, ServerApiVersion, Db, Collection } from "mongodb";
 import { UUID } from "bson";
-import { BSON } from "mongodb";
+//import { BSON } from "mongodb";
 
 export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
