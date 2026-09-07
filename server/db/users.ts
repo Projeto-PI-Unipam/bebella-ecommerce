@@ -1,14 +1,10 @@
-import { hash, compare } from "bcrypt";
-//import { useState, createContext, useContext } from "react";
-import { createContext, useState } from "react";
-import dotenv from "dotenv";
-import path from "path";
-import { z } from "zod";
-
-import { MongoClient, ServerApiVersion, Collection } from "mongodb";
+import { hash, compare } from "bcryptjs";
+import { type Collection } from "mongodb";
 import { UUID } from "bson";
+import { randomUUID } from "node:crypto";
 
 export interface UserData {
+  id: UUID;
   token: string;
   username: string;
   hashpass: string;
@@ -20,65 +16,12 @@ export interface UserData {
 }
 
 export type AuthStatus = boolean | UserData;
-export const AuthContext = createContext(false);
-
-class NoUserError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "NoUserError";
-    Object.setPrototypeOf(this, NoUserError.prototype);
-  }
-}
-
-class WrongPassError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WrongPassError";
-    Object.setPrototypeOf(this, WrongPassError.prototype);
-  }
-}
-
-dotenv.config({
-  path: path.resolve(process.cwd(), `.env`),
-});
-
-const envSchema = z.object({
-  DATABASE_URL: z.url("DATABASE_URL must be a valid address"),
-});
-
-const envRes = envSchema.safeParse(process.env);
-
-if (!envRes.success) {
-  console.error("Invalid environment configuration:");
-  console.error(z.treeifyError(envRes.error));
-  process.exit(1);
-}
-
-export const env = envRes.data;
-
-const mclient = new MongoClient(env.DATABASE_URL, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-  pkFactory: { createPk: () => new UUID().toBinary() },
-});
-
-async function connectMongo() {
-  try {
-    await mclient.connect();
-    const response = mclient.db("userdb").collection("users");
-    return response;
-  } catch (error) {
-    console.log(error);
-  }
-}
 
 async function addUser(coll: Collection, username: string, password: string) {
   try {
     let new_hashpass = await hash(password, 10);
-    const new_user: UserData = {
+    const new_user = {
+      id: randomUUID,
       token: "",
       username: username,
       hashpass: new_hashpass,
@@ -98,22 +41,61 @@ async function addUser(coll: Collection, username: string, password: string) {
 async function checkUser(coll: Collection, username: string, password: string) {
   const res = await coll.findOne<UserData>({ username: `${username}` });
   if (!res) {
-    const e = new NoUserError(`Não foi encontrado usuário para: ${username}`);
-    throw e;
+    /*const e = new NoUserError(`Não foi encontrado usuário para: ${username}`);
+    throw e;*/
+    console.error(`Não foi encontrado usuário para: ${username}`);
   } else {
     try {
       const result = await compare(password, res.hashpass);
       if (result === true) {
         return res;
       } else {
-        const e = new WrongPassError("A senha informada está incorreta.");
-        throw e;
+        /*const e = new WrongPassError("A senha informada está incorreta.");
+        throw e;*/
+        console.error("Senha incorreta");
       }
     } catch (error) {
-      throw new Error(
+      /*throw new Error(
         "Erro ao fazer a verificação da senha. Por favor, entre em contato com o suporte.",
-      );
+      );*/
+      console.error(error);
     }
+  }
+}
+
+/*
+class NoUserError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NoUserError";
+    Object.setPrototypeOf(this, NoUserError.prototype);
+  }
+}
+
+class WrongPassError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WrongPassError";
+    Object.setPrototypeOf(this, WrongPassError.prototype);
+  }
+}
+
+const mclient = new MongoClient(env.DATABASE_URL, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+  pkFactory: { createPk: () => new UUID().toBinary() },
+});
+
+async function connectMongo() {
+  try {
+    await mclient.connect();
+    const response = mclient.db("userdb").collection("users");
+    return response;
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -177,7 +159,6 @@ export async function LoginPage({ setter }: { setter: Function }) {
   );
 }
 
-/*
 function LogInOutButton() {}
 
 function NewAccount() {}

@@ -1,9 +1,9 @@
-import BSmall from "./assets/icons/logo-png.png";
+import BSmall from "../assets/icons/logo-png.png";
 import { ShoppingCartIcon } from "@phosphor-icons/react/dist/csr/ShoppingCart";
 import { UserIcon } from "@phosphor-icons/react/dist/csr/User";
 import Sidemenu from "./Sidemenu";
 
-import "./assets/fonts/fonts.css";
+import "../assets/fonts/fonts.css";
 
 function Topbar() {
   const backgroundActive = "#f6bebf";

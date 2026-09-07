@@ -1,8 +1,9 @@
-import dotenv from "dotenv";
-import path from "path";
-import { z } from "zod";
-
-import { MongoClient, ServerApiVersion, Db, Collection } from "mongodb";
+import {
+  MongoClient,
+  ServerApiVersion,
+  type Db,
+  type Collection,
+} from "mongodb";
 import { UUID } from "bson";
 //import { BSON } from "mongodb";
 
@@ -15,6 +16,7 @@ export interface ClothesSize {
 }
 
 export interface ClothesModel {
+  id: UUID;
   name: string;
   brand?: string;
   category: string;
@@ -24,25 +26,7 @@ export interface ClothesModel {
   pic_url: string;
 }
 
-dotenv.config({
-  path: path.resolve(process.cwd(), `.env`),
-});
-
-const envSchema = z.object({
-  DATABASE_URL: z.url("DATABASE_URL must be a valid address"),
-});
-
-const envRes = envSchema.safeParse(process.env);
-
-if (!envRes.success) {
-  console.error("Invalid environment configuration:");
-  console.error(z.treeifyError(envRes.error));
-  process.exit(1);
-}
-
-export const env = envRes.data;
-
-const mclient = new MongoClient(env.DATABASE_URL, {
+const mclient = new MongoClient(process.env.DATABASE_URL || "", {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,

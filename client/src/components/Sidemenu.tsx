@@ -1,9 +1,9 @@
-import MBtn from "./assets/icons/menu-svg.svg";
+import MBtn from "../assets/icons/menu-svg.svg";
 import { motion } from "motion/react";
 import { useState } from "react";
 
 import "./Sidemenu.css";
-import "./assets/fonts/fonts.css";
+import "../assets/fonts/fonts.css";
 
 function Sidemenu() {
   const [isActive, activate] = useState(false);
@@ -29,8 +29,8 @@ function Sidemenu() {
       >
         <motion.div
           style={{
-            alignContent: "center",
             display: "flex",
+            justifyContent: "center",
             height: 42,
             width: "100%",
             alignItems: "center",
@@ -42,9 +42,10 @@ function Sidemenu() {
         >
           <motion.button
             style={{
+              position: "absolute",
               verticalAlign: "middle",
-              top: 4,
-              left: 8,
+              top: 2,
+              left: 0,
               borderStyle: "none",
             }}
             animate={{
@@ -67,6 +68,8 @@ function Sidemenu() {
               paddingBottom: 2,
               paddingLeft: 8,
               position: "relative",
+              justifySelf: "anchor-center",
+              justifyContent: "center",
               textAlign: "center",
               alignSelf: "center",
               verticalAlign: "center",
