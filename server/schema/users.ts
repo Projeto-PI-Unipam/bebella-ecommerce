@@ -1,86 +1,101 @@
 import { randomBytes, pbkdf2Sync } from "node:crypto";
 import { Strategy } from "passport-local";
-import { Schema, model, Model } from "mongoose";
-import { sign } from "jsonwebtoken";
-import db from "../db/connection";
+import { ObjectId } from "mongodb";
+//import { Schema, model, Model } from "mongoose";
+import jwt from "jsonwebtoken";
+import db from "../db/connection.ts";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 export interface UserData {
+  id?: ObjectId;
   name: string;
   email: string;
   hash: string;
   salt: string;
-  picture_url: string;
-  wishlist_ids: string[];
-  cart_products: string[];
-  order_addresses: string[];
-  past_orders: string[];
+  birth_date: Date;
+  picture_url?: string;
+  wishlist_ids?: string[];
+  cart_products?: string[];
+  order_addresses?: string[];
+  past_orders?: string[];
 }
 
-interface UserStatics extends Model<UserData> {}
+const db_coll = db.collection("users");
 
-interface UserMethods extends Model<UserData> {
-  setPassword(password: string): void;
-  checkPassword(password: string): boolean;
-  genToken(): string;
+export async function userExists(user_email: string, returning: boolean) {
+  try {
+    const user = await db_coll.findOne({ email: { $eq: user_email } });
+    if (!user) {
+      return false;
+    } else {
+      if (returning) {
+        return user;
+      } else {
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 }
 
-const user_schema = new Schema<UserData, UserStatics, UserMethods>({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  picture_url: String,
-  wishlist_ids: Array<String>,
-  cart_products: Array<String>,
-  order_addresses: Array<String>,
-  past_orders: Array<String>,
-  hash: String,
-  salt: String,
-});
+export async function hashPassword(password: string) {
+  try {
+    const new_salt = randomBytes(16).toString("hex");
+    const new_hash = pbkdf2Sync(
+      password,
+      new_salt,
+      2400,
+      64,
+      "sha256",
+    ).toString("hex");
+    return [new_salt, new_hash];
+    //await db_coll.updateOne(query, { $set: {hash: new_hash, salt: new_salt}});
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
 
-user_schema.method("setPassword", function setPassword(password: string) {
-  this.salt = randomBytes(16).toString("hex");
-  this.hash = pbkdf2Sync(password, this.salt, 2400, 64, "sha256").toString(
-    "hex",
-  );
-});
+export async function checkPassword(user_email: string, password: string) {
+  try {
+    const obj = await db_coll.findOne<UserData>({ email: { $eq: user_email } });
+    const hash_try = pbkdf2Sync(
+      password,
+      obj!.salt,
+      2400,
+      64,
+      "sha256",
+    ).toString("hex");
+    return hash_try === obj!.hash;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
 
-user_schema.method("checkPassword", function checkPassword(password: string) {
-  const hash = pbkdf2Sync(password, this.salt, 2400, 64, "sha256").toString(
-    "hex",
-  );
-  return this.hash === hash;
-});
-
-user_schema.method("genToken", function genToken() {
+export async function genToken(user_data: UserData) {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 1);
-
-  return sign(
+  return jwt.sign(
     {
-      _id: this._id,
-      email: this.email,
-      name: this.name,
+      _id: user_data.id,
+      email: user_data.email,
+      name: user_data.name,
       exp: Math.round(expiry.getTime() / 1000),
     },
     process.env.JWT_SEC!,
   );
-});
+}
 
-export const UserModel = model("UserModel", user_schema);
-
-export const addUser = async function (
+export async function addUser(
   name: string,
   email: string,
   password: string,
+  birth: Date,
 ) {
   try {
     const new_salt = randomBytes(16).toString("hex");
@@ -91,18 +106,19 @@ export const addUser = async function (
       64,
       "sha256",
     ).toString("hex");
-    db.collection("users").insertOne(
-      new UserModel({
-        name: name,
-        email: email,
-        hash: new_hashpass,
-        salt: new_salt,
-      }),
-    );
+    const new_user: UserData = {
+      id: new ObjectId(),
+      name: name,
+      email: email,
+      birth_date: birth,
+      hash: new_hashpass,
+      salt: new_salt,
+    };
+    await db.collection("users").insertOne(new_user);
   } catch (err) {
     console.error(err);
   }
-};
+}
 
 export const LocalStrategy = new Strategy(
   {
@@ -110,14 +126,16 @@ export const LocalStrategy = new Strategy(
   },
   async function (username, password, done) {
     try {
-      const result = await UserModel.findOne({ email: username }).exec();
-      if (result?._id) {
-        if (!result.checkPassword(password)) {
+      const result = await db_coll.findOne<UserData>({
+        email: { $eq: username },
+      });
+      if (result?.id) {
+        if (await checkPassword(username, password)) {
+          return done(null, result);
+        } else {
           return done(null, false, {
             message: "wrong_password",
           });
-        } else {
-          return done(null, result);
         }
       } else {
         return done(null, false, {

@@ -1,5 +1,5 @@
-import { UUID } from "bson";
-import { type Collection } from "mongodb";
+import { ObjectId, Collection } from "mongodb";
+import db from "./connection";
 
 const sale_status = [
   "Pagamento Pendente",
@@ -13,6 +13,8 @@ const sale_status = [
 ];
 
 const pay_methods = ["Pix", "Cartão de Débito", "Cartão de Crédito", "Boleto"];
+
+const db_coll = db.collection("items");
 
 // should encrypt
 interface ShippingInfo {
@@ -29,21 +31,21 @@ interface SaleReview {
 }
 
 interface WebSale {
-  id: UUID;
-  user_id: UUID;
-  item_id: UUID;
+  id: ObjectId;
+  user_id: ObjectId;
+  item_id: ObjectId;
   status: number;
   pay_method: number;
   installments: number;
   date: Date;
   shipment: ShippingInfo;
   cost: number;
-  review: SaleReview | null;
+  review?: SaleReview;
 }
 
-export async function register_sale(coll: Collection, sale: WebSale) {
+export async function register_sale(sale: WebSale) {
   try {
-    await coll.insertOne(sale);
+    await db_coll.insertOne(sale);
   } catch (err) {
     console.error(err);
   }

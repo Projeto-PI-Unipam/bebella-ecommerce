@@ -1,47 +1,56 @@
-import { type Collection } from "mongodb";
-import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
+import db from "../db/connection.ts";
 
 export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
 
-const clothes_schema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  brand: String,
-  category: {
-    type: String,
-    required: true,
-  },
-  size_data: {
-    type: [{ s_name: String, s_stock: Number }],
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  in_stock: {
-    type: Number,
-    required: true,
-  },
-  pic_url: {
-    type: String,
-    required: true,
-  },
-});
-
-const ClothesModel = mongoose.model("ClothesModel", clothes_schema);
-
-export async function addItem(coll: Collection, item: typeof ClothesModel) {
-  const addResult = await coll.insertOne(item).catch(console.dir);
-  return addResult;
+export interface ClothingData {
+  id?: ObjectId;
+  name: string;
+  brand: string;
+  category: string;
+  size_data: size[];
+  description?: string;
+  in_stock: number;
+  pic_url?: string;
 }
 
-export async function getTotal(coll: Collection) {
-  const getRes = await coll.countDocuments({});
-  return getRes;
+const db_coll = db.collection("items");
+
+export async function addItem(
+  name: string,
+  brand: string,
+  category: string,
+  size_data: size[],
+  in_stock: number,
+  description?: string,
+  pic_url?: string,
+) {
+  try {
+    const new_item: ClothingData = {
+      id: new ObjectId(),
+      name: name,
+      brand: brand,
+      category: category,
+      size_data: size_data,
+      description: description,
+      in_stock: in_stock,
+      pic_url: pic_url,
+    };
+    await db_coll.insertOne(new_item).catch(console.dir);
+    return;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 }
 
-//export async function queryCollection(coll: Collection) {}
+export async function getTotal() {
+  try {
+    const getRes = await db_coll.countDocuments({});
+    return getRes;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}

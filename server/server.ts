@@ -2,8 +2,12 @@ import express, { type Request, type Response, type Express } from "express";
 import { ObjectId } from "mongodb";
 import cors from "cors";
 import passport from "passport";
-import { Model } from "mongoose";
-import { LocalStrategy } from "./schema/users.ts";
+import {
+  LocalStrategy,
+  genToken,
+  userExists,
+  addUser,
+} from "./schema/users.ts";
 
 const PORT = process.env.PORT;
 const app: Express = express();
@@ -11,7 +15,7 @@ const app: Express = express();
 app.use(cors());
 app.use(express.json());
 
-import { UserModel, UserData } from "./schema/users.ts";
+import { type UserData } from "./schema/users.ts";
 import db from "./db/connection.ts";
 
 passport.use(LocalStrategy);
@@ -49,7 +53,7 @@ app.get(
       if (!query || query.length === 0) {
         res.status(404).send("Product not found");
       } else {
-        res.status(500).send(query);
+        res.status(200).send(query);
       }
     } catch (err) {
       console.error(err);
@@ -59,7 +63,17 @@ app.get(
 
 app.use(passport.initialize());
 
-app.post("/userapi/check");
+app.post(
+  "/userapi/check",
+  async (req: Request<{ email: string }>, res: Response) => {
+    const user_res = await userExists(req.params.email, false);
+    if (user_res === true) {
+      res.status(200).send(true);
+    } else {
+      res.status(404).send(false);
+    }
+  },
+);
 
 app.post(
   "/userapi/login",
@@ -69,14 +83,41 @@ app.post(
   ) => {
     passport.authenticate(
       LocalStrategy,
-      async (err: any, user: Model<UserData>, info: any) => {
+      async (err: any, user: UserData, _: any) => {
         if (err) {
           res.status(404).json(err);
         } else {
-          const token = user.genToken;
+          const token = await genToken(user);
+          res.status(200).send(token);
         }
       },
     )(req, res);
+  },
+);
+
+app.post(
+  "/userapi/register",
+  async (
+    req: Request<{
+      name: string;
+      email: string;
+      password: string;
+      birth_date: Date;
+    }>,
+    res: Response,
+  ) => {
+    try {
+      await addUser(
+        req.params.name,
+        req.params.email,
+        req.params.password,
+        req.params.birth_date,
+      );
+      res.status(200).send("user_created");
+    } catch (err) {
+      console.error(err);
+      res.status(503).send(err);
+    }
   },
 );
 
