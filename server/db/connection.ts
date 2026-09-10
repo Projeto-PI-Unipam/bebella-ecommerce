@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 
 dotenv.config();
-const uri = process.env.DATABASE_URL || "";
+const uri = process.env.DBPROD_URL || "";
 const client = new MongoClient(uri);
 
 try {
@@ -13,6 +13,6 @@ try {
   console.error(err);
 }
 
-let db = client.db("sample_restaurants");
+let db = client.db("bebella_store");
 
 export default db;
