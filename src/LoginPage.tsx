@@ -1,20 +1,15 @@
-// import { hash, compare } from "bcrypt";
 import { useState } from "react";
+import './LoginPage.css';
+import logoHorizontal from './assets/icons/logo-horizontal-svg.svg';
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-            }}
-        >
-            <h1>
+        <div className="login-page">
+            <img src={logoHorizontal} alt="Bebella Boutique" className='logo' />
+            <h1 className='login-titulo'>
                 <span>Entre</span> ou crie sua conta
             </h1>
-            <p>digite um e-mail para continuar</p>
+            <p className="login-subtitulo">digite um e-mail para continuar</p>
             <form>
                 <label>
                     <p>e-mail*</p>
@@ -22,18 +17,25 @@ export default function LoginPage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        className="login-input"
                     />
                 </label>
-                <p>
-                    Ao clicar em próximo, afirmo que concordo com a{" "}
-                    <a href="#">Política de privacidade</a> e os{" "}
-                    <a href="#">Termos de uso</a> da Bebella Boutique.
+                <p className="login-termos">
+                    Ao clicar em continuar, afirmo que concordo com a
                 </p>
-                <div>
+                <p
+                    className="login-termos-1">
+                    <a href="#">Política de privacidade</a> e os <a href="#">Termos de uso</a>
+                </p>
+                <p
+                    className="login-termos-2">
+                    da Bebella Boutique.
+                </p>
+                <div className="login-botao">
                     <button type="submit">Continuar</button>
                 </div>
             </form>
-        </div>
+        </div >
     );
 }
 
