@@ -1,6 +1,7 @@
 // import { hash, compare } from "bcrypt";
-//import { useState, createContext, useContext } from "react";
+import { useState } from "react";
 export default function LoginPage() {
+    const [email, setEmail] = useState("");
     return (
         <div
             style={{
@@ -14,7 +15,9 @@ export default function LoginPage() {
                 <label>
                     <p>E-mail:</p>
                     <input
-                        type="text"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
                 </label>
                 <label>
