@@ -11,23 +11,29 @@ export default function LoginPage() {
                 justifyContent: "center",
             }}
         >
-            <form >
+            <h1>
+                <span>Entre</span> ou crie sua conta
+            </h1>
+            <p>digite um e-mail para continuar</p>
+            <form>
                 <label>
-                    <p>E-mail:</p>
+                    <p>e-mail*</p>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
                 </label>
+                <p>
+                    Ao clicar em próximo, afirmo que concordo com a{" "}
+                    <a href="#">Política de privacidade</a> e os{" "}
+                    <a href="#">Termos de uso</a> da Bebella Boutique.
+                </p>
                 <div>
-                    <button type="submit">
-                        Entrar
-                    </button>
+                    <button type="submit">Continuar</button>
                 </div>
             </form>
         </div>
     );
 }
 
-// function LogInOutButton() {}
