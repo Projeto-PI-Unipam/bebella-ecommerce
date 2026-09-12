@@ -20,12 +20,6 @@ export default function LoginPage() {
                         onChange={(e) => setEmail(e.target.value)}
                     />
                 </label>
-                <label>
-                    <p>Senha:</p>
-                    <input
-                        type="password"
-                    />
-                </label>
                 <div>
                     <button type="submit">
                         Entrar
