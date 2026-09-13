@@ -5,38 +5,21 @@ export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
 
 export interface ClothingData {
-  id?: ObjectId;
+  id: ObjectId;
   name: string;
   brand: string;
   category: string;
   size_data: size[];
   description?: string;
   in_stock: number;
+  price: number;
   pic_url?: string;
 }
 
 const db_coll = db.collection("items");
 
-export async function addItem(
-  name: string,
-  brand: string,
-  category: string,
-  size_data: size[],
-  in_stock: number,
-  description?: string,
-  pic_url?: string,
-) {
+export async function addItem(new_item: ClothingData) {
   try {
-    const new_item: ClothingData = {
-      id: new ObjectId(),
-      name: name,
-      brand: brand,
-      category: category,
-      size_data: size_data,
-      description: description,
-      in_stock: in_stock,
-      pic_url: pic_url,
-    };
     await db_coll.insertOne(new_item).catch(console.dir);
     return;
   } catch (err) {
@@ -45,7 +28,21 @@ export async function addItem(
   }
 }
 
-export async function getTotal() {
+export async function changeItem(update: ClothingData) {
+  try {
+    await db_coll.updateOne(
+      { _id: { $eq: update.id } },
+      {
+        $set: update,
+      },
+    );
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
+
+export async function countItems() {
   try {
     const getRes = await db_coll.countDocuments({});
     return getRes;

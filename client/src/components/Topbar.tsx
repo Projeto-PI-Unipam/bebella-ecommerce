@@ -4,9 +4,11 @@ import { UserIcon } from "@phosphor-icons/react/dist/csr/User";
 import Sidemenu from "./Sidemenu";
 
 import "../assets/fonts/fonts.css";
+import { useState } from "react";
 
-function Topbar() {
+function Topbar({ host }: { host: string | null }) {
   const backgroundActive = "#f6bebf";
+  const [searchText, setSearch] = useState("");
 
   return (
     <>
@@ -22,6 +24,7 @@ function Topbar() {
           flexWrap: "nowrap",
           justifyContent: "space-between",
           alignItems: "center",
+          top: 0,
           //placeItems: "stretch",
         }}
       >
@@ -84,6 +87,12 @@ function Topbar() {
               fontSize: "20px",
             }}
             placeholder=""
+            onChange={(input) => setSearch(input.target.value)}
+            onKeyDown={(keyEvent) => {
+              if (keyEvent.key === "Enter") {
+                location.href = location.origin + `/search?s=${searchText}`;
+              }
+            }}
           />
         </div>
 
@@ -105,6 +114,7 @@ function Topbar() {
           />
 
           <UserIcon
+            visibility={host && host.length > 0 ? "visible" : "hidden"}
             style={{
               marginRight: "8px",
               cursor: "pointer",
