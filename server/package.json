@@ -18,6 +18,8 @@
     "@types/express-jwt": "^6.0.4",
     "@types/mongodb": "^4.0.6",
     "@types/node": "^26.4.1",
+    "@types/passport": "^1.0.17",
+    "@types/passport-local": "^1.0.38",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "mongodb": "^7.6.0"
@@ -25,6 +27,8 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
-    "express-jwt": "^8.5.1"
+    "express-jwt": "^8.5.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
   }
 }

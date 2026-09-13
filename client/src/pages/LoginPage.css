@@ -1,73 +1,81 @@
 .login-page {
-    font-family: 'Prompt';
-    display: flex;
-    color: black;
-    flex: 1;
+  display: flex;
+  width: 100%;
 }
 
 @media only screen and (min-width: 600px) {
-    .login-padrao {
-        width: 33%;
-        background-image: url("./assets/icons/pattern_cut.png");
-        background-repeat: repeat;
-        background-size: 33svw auto;
-    }
+  .login-page {
+    flex-direction: row;
+  }
+  .login-padrao {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    width: 33%;
+    overflow-y: hidden;
+    height: 100%;
+    display: flex;
+    position: absolute;
+    background-image: url("../assets/img/pattern_cut.png");
+    background-repeat: repeat;
+    background-size: 33svh auto;
+  }
+  .login-conteudo {
+    margin-left: 33%;
+    width: 60%;
+  }
+  .logo {
+    justify-self: start;
+    margin-bottom: 4%;
+    margin-top: 6%;
+  }
+}
+
+@media only screen and (max-width: 599px) {
+  .login-page {
+    flex-direction: column;
+  }
+  .logo {
+    justify-self: center;
+    margin-top: 12%;
+    margin-bottom: 10%;
+  }
+  .login-botao {
+    margin-top: 80%;
+  }
 }
 
 .login-conteudo {
-    flex: 1;
-    padding: 0 60px;
-    max-width: 720px;
-}
-
-.login-titulo {
-    font-size: calc(1rem + 5svh);
-    font-weight: 500;
-    margin: 0 0 8px;
-    line-height: calc(1.5rem + 3svh);
-}
-
-.login-titulo span {
-    color: #f6bebf;
+  padding: 0 60px;
 }
 
 .logo {
-    height: auto;
-    width: 195px;
-    margin-bottom: 10%;
-    margin-top: 12%;
-    text-align: left;
+  display: flex;
+  height: auto;
+  width: calc(8rem + 8dvw);
 }
 
 a {
-    color: #f6bebf;
-}
-
-.login-input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 18px 20px;
-    border: 1px solid #f6bebf;
-    border-radius: 12px;
-    font: inherit;
-    outline: none;
-    background-color: white;
-    color: black;
-}
-
-.login-subtitulo {
-    padding: 15px 0px 40px 0px;
+  color: #f6bebf;
 }
 
 .login-termos {
-    padding: 40px 0px 0px 0px;
+  break-after: avoid;
 }
 
 .login-botao {
-    position: relative;
-    margin: auto 12px auto calc(92% - 12px);
+  font: inherit;
+  border-radius: 16px;
+  border: 2px solid #f6bebf;
+  min-width: 72px;
+  min-height: 40px;
+  justify-self: end;
+  margin-left: 86%;
+  color: #000;
+  background: #f6bebf;
 }
 
 form {
-    max-width: 660px;
+  max-width: 660px;
 }

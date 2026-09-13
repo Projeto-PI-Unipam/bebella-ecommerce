@@ -7,6 +7,7 @@ import ClothesList from "./components/ClothesList";
 import SearchPage from "./pages/SearchPage";
 import HomePage from "./pages/HomePage";
 import ItemHandler from "./handlers/ItemHandler";
+import LoginPage from "./pages/LoginPage";
 
 export const b_port = 5180;
 
@@ -109,13 +110,16 @@ export default function App() {
     return;
   }, [location.pathname, sessionStorage.length]);
   return (
-    <div className="w-full p-6">
-      <Topbar host={activeSession} />
+    <div className="w-full h-full p-6">
+      {!location.pathname.includes("login") ? (
+        <Topbar host={activeSession} />
+      ) : null}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/browse" element={<ClothesList />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route
             path="/admin/items"
             element={<ItemHandler host={activeSession} />}
