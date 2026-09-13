@@ -5,7 +5,7 @@ import { useState } from "react";
 import "./Sidemenu.css";
 import "../assets/fonts/fonts.css";
 
-function Sidemenu() {
+export default function Sidemenu() {
   const [isActive, activate] = useState(false);
   const [isReady, makeReady] = useState(false);
   const pinkBgDefault = "#f6bebf";
@@ -90,5 +90,3 @@ function Sidemenu() {
     </>
   );
 }
-
-export default Sidemenu;

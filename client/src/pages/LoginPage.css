@@ -1,0 +1,73 @@
+.login-page {
+    font-family: 'Prompt';
+    display: flex;
+    color: black;
+    flex: 1;
+}
+
+@media only screen and (min-width: 600px) {
+    .login-padrao {
+        width: 33%;
+        background-image: url("./assets/icons/pattern_cut.png");
+        background-repeat: repeat;
+        background-size: 33svw auto;
+    }
+}
+
+.login-conteudo {
+    flex: 1;
+    padding: 0 60px;
+    max-width: 720px;
+}
+
+.login-titulo {
+    font-size: calc(1rem + 5svh);
+    font-weight: 500;
+    margin: 0 0 8px;
+    line-height: calc(1.5rem + 3svh);
+}
+
+.login-titulo span {
+    color: #f6bebf;
+}
+
+.logo {
+    height: auto;
+    width: 195px;
+    margin-bottom: 10%;
+    margin-top: 12%;
+    text-align: left;
+}
+
+a {
+    color: #f6bebf;
+}
+
+.login-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 18px 20px;
+    border: 1px solid #f6bebf;
+    border-radius: 12px;
+    font: inherit;
+    outline: none;
+    background-color: white;
+    color: black;
+}
+
+.login-subtitulo {
+    padding: 15px 0px 40px 0px;
+}
+
+.login-termos {
+    padding: 40px 0px 0px 0px;
+}
+
+.login-botao {
+    position: relative;
+    margin: auto 12px auto calc(92% - 12px);
+}
+
+form {
+    max-width: 660px;
+}
