@@ -37,7 +37,7 @@ export default function LoginPage() {
           <h1
             className="login-titulo"
             style={{
-              fontSize: "calc(2.5rem + 1svw)",
+              fontSize: "calc(2rem + 0.8svw)",
               fontWeight: 500,
               margin: "0 0 8px auto",
               lineHeight: "calc(1.5rem + 3svh)",
@@ -50,7 +50,7 @@ export default function LoginPage() {
           >
             <span
               style={{
-                fontSize: "calc(2.5rem + 1svw)",
+                fontSize: "calc(2rem + 0.8svw)",
                 fontWeight: 500,
                 margin: "0 0 8px 0",
                 lineHeight: "calc(1.5rem + 3svh)",
@@ -65,6 +65,7 @@ export default function LoginPage() {
             </span>
             <br /> ou crie sua conta
           </h1>
+          <br />
           <p
             className="login-subtitulo"
             style={{
@@ -74,6 +75,7 @@ export default function LoginPage() {
               fontFamily: "Prompt",
               marginTop: "0px",
               paddingTop: "0px",
+              fontSize: "calc(1rem + 0.5svh)",
             }}
           >
             digite um e-mail para continuar
