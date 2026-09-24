@@ -110,7 +110,7 @@ export default function App() {
     return;
   }, [location.pathname, sessionStorage.length]);
   return (
-    <div className="w-full h-full p-6">
+    <div>
       {!location.pathname.includes("login") ? (
         <Topbar host={activeSession} />
       ) : null}

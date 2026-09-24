@@ -3,6 +3,8 @@ import { PageNavButton, PageNavIndicator } from "../components/PageButton";
 import { useLocation } from "react-router-dom";
 import { b_port } from "../App";
 import { ObjectId } from "bson";
+import "../assets/fonts/fonts.css";
+import ProductCard from "../components/ProductCard";
 
 type size = string | number;
 const sizes = ["PP", "P", "M", "G", "GG"];
@@ -16,25 +18,41 @@ export interface ClothesModel {
   size_data: size[];
   description?: string;
   in_stock: number;
-  pic_url?: string;
+  pic_url?: string[];
+  price: number;
 }
 
-const Clothing = ({ data }: { data: ClothesModel }) => (
-  <tr
-    key={data.db_id}
-    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-  >
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.name}
-    </td>
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.description}
-    </td>
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.category}
-    </td>
-  </tr>
-);
+const test: ClothesModel = {
+  id: new ObjectId(),
+  db_id: new ObjectId().toString(),
+  name: "Roupa Teste",
+  brand: "Marca Proto",
+  category: "Categoria Zero",
+  size_data: (sizes as size[]).concat([40, 42] as size[]),
+  description: "Produto para testar a pesquisa do site",
+  in_stock: 3,
+  pic_url: [
+    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
+    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
+  ],
+  price: 200.5,
+};
+
+const test2: ClothesModel = {
+  id: new ObjectId(),
+  db_id: new ObjectId().toString(),
+  name: "Segundo Teste",
+  brand: "Topíssimo",
+  category: "Incrível",
+  size_data: (sizes as size[]).concat([40, 42] as size[]),
+  description: "Produto para testar a pesquisa do site, de novo!",
+  in_stock: 3,
+  pic_url: [
+    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
+    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
+  ],
+  price: 120,
+};
 
 function formatSearch(term: string) {
   const searchRegex = new RegExp(/(\?s=)(.+)/);
@@ -58,7 +76,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     async function getItems() {
-      console.log(location.search, formatSearch(location.search));
+      /*console.log(location.search, formatSearch(location.search));
       const endpoint = `http://localhost:${b_port}/items/search/${formatSearch(location.search)}`;
       const results = await fetch(endpoint);
       if (!results.ok) {
@@ -67,7 +85,11 @@ export default function SearchPage() {
       const fmt_res = await results.json();
       console.log(fmt_res);
       setItemCount(fmt_res[1]);
-      setItems(fmt_res[0]);
+      setItems(fmt_res[0]);*/
+
+      // test
+      setItemCount(5);
+      setItems([test, test2, test, test2, test]);
     }
     getItems();
     return;
@@ -85,8 +107,9 @@ export default function SearchPage() {
         pic_url: c.pic_url,
         size_data: c.size_data,
         description: c.description,
+        price: c.price,
       };
-      return <Clothing data={d} />;
+      return <ProductCard item={d} />;
     });
     return lst;
   }
@@ -103,32 +126,18 @@ export default function SearchPage() {
       }}
     >
       <div
-        style={{
+        className="grid grid-cols-1 md:grid-cols-3 w-content-fit min-h-screen h-full pl-16 pr-16 pt-20 pb-20 gap-x-12 gap-y-16 justify-center justify-items-start place-self-center"
+        /*style={{
           overscrollBehavior: "none",
           width: "100%",
           minHeight: "100svh",
           flexGrow: 1,
           backgroundColor: "#fff",
-          display: "flex",
-          flexDirection: "row",
-        }}
+          display: "grid",
+          //flexDirection: "row",
+        }}*/
       >
-        <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
-            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Nome
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Descrição
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Categoria
-              </th>
-            </tr>
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0">{clothesList()}</tbody>
-        </table>
+        {clothesList()}
       </div>
       <div
         style={{

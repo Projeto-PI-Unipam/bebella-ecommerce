@@ -44,9 +44,11 @@ export default function Sidemenu() {
             style={{
               position: "absolute",
               verticalAlign: "middle",
-              top: 2,
-              left: 0,
+              top: 0,
+              left: 4,
               borderStyle: "none",
+              width: "40px",
+              height: "40px",
             }}
             animate={{
               backgroundColor: isActive ? lightBgActive : pinkBgDefault,

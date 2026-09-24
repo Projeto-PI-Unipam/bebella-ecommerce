@@ -89,7 +89,7 @@ function Topbar({ host }: { host: string | null }) {
             placeholder=""
             onChange={(input) => setSearch(input.target.value)}
             onKeyDown={(keyEvent) => {
-              if (keyEvent.key === "Enter") {
+              if (keyEvent.key === "Enter" && searchText.length >= 3) {
                 location.href = location.origin + `/search?s=${searchText}`;
               }
             }}
@@ -105,7 +105,7 @@ function Topbar({ host }: { host: string | null }) {
         >
           <ShoppingCartIcon
             style={{
-              marginRight: "8px",
+              marginRight: "16px",
               cursor: "pointer",
             }}
             color="#000"
@@ -114,7 +114,6 @@ function Topbar({ host }: { host: string | null }) {
           />
 
           <UserIcon
-            visibility={host && host.length > 0 ? "visible" : "hidden"}
             style={{
               marginRight: "8px",
               cursor: "pointer",

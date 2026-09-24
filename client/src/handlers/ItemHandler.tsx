@@ -32,6 +32,8 @@ interface DataPoints {
 export default function ItemHandler({ host }: { host: string }) {
   const [showWarn, activateWarn] = useState<number>(1);
   const [datapoints, setData] = useState<DataPoints | null>(null);
+  const [adding, showAdd] = useState<boolean>(false);
+  const [formName, setName] = useState<string>("");
   const location = useLocation();
   useEffect(() => {
     async function fetchData() {
@@ -67,11 +69,35 @@ export default function ItemHandler({ host }: { host: string }) {
     fetchData();
     return;
   }, [location.pathname, host]);
+  if (adding) {
+    return (
+      <div className="w-full h-full flex flex-col justify-center content-center">
+        <div className="p-8">
+          <span className="font-[Boston_Angel] text-5xl text-neutral-700">
+            {"Adicionar novo produto"}
+          </span>
+        </div>
+        <form>
+          <input
+            className="inline-flex box-border h-10 w-120 rounded-lg border-1 border-neutral-400 self-center justify-center place-self-center"
+            type="text"
+            value={formName}
+            onChange={(inp) => setName(inp.target.value)}
+          />
+        </form>
+      </div>
+    );
+  }
   if (showWarn === 0 && host) {
     return (
       <div>
         <h1>{"Autorizado"}</h1>
         <p>{`Total de produtos: ${datapoints?.productsCount ?? 0}`}</p>
+        <button
+          type="button"
+          className="h-50 w-50 bg-blue-100"
+          onClick={() => showAdd(true)}
+        />
       </div>
     );
   } else if (showWarn === 2) {

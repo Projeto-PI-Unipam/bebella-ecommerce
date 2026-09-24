@@ -85,7 +85,7 @@ app.get("/items/all", async (_: Request, res: Response) => {
 
 app.get("/items/search/:searchTerm", async (req: Request, res: Response) => {
   try {
-    const search_reg = new RegExp(`${req.params.searchTerm}.+`, "i");
+    const search_reg = new RegExp(`.*${req.params.searchTerm}.*`, "gi");
     let results = await items_db
       .find({ $or: [{ name: search_reg }, { brand: search_reg }] })
       .toArray();
@@ -257,7 +257,7 @@ app.post(
       price: number;
       auth_token: string;
       description?: string;
-      pic_url?: string;
+      pic_url?: string[];
     }>,
     res: Response,
   ) {
@@ -303,7 +303,7 @@ app.patch(
       price: number;
       auth_token: string;
       description?: string;
-      pic_url?: string;
+      pic_url?: string[];
     }>,
     res: Response,
   ) {
