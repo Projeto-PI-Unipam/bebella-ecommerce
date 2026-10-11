@@ -16,6 +16,12 @@ export interface ClothingData {
   pic_url?: string[];
 }
 
+export interface CartProd {
+  id: ObjectId;
+  amount: number;
+  size: size;
+}
+
 const db_coll = db.collection("items");
 
 export async function addItem(new_item: ClothingData) {

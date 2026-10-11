@@ -164,12 +164,13 @@ app.post(
 
 app.post(
   "/userapi/check",
+  encodedParser,
   async (req: Request<{ email: string }>, res: Response) => {
-    const user_res = await userExists(req.params.email, false);
-    if (user_res === true) {
-      res.status(200).send(true);
+    const user_res = await userExists(req.body.email, true);
+    if (user_res === false) {
+      res.status(206).send(false);
     } else {
-      res.status(204).send(false);
+      res.status(200).send(JSON.stringify((user_res as UserData).salt));
     }
   },
 );
@@ -201,18 +202,18 @@ app.post(
       if (req.body && req.body.email && req.body.password) {
         const result = await loginUser(req.body.email, req.body.password);
         if (!result || !result.id) {
-          res.status(406).send(res);
+          res.status(406).send();
         } else {
           const new_token = genToken(result);
-          res.status(200).send(new_token);
+          res.status(200).send(JSON.stringify(new_token));
         }
       }
     } catch (err: any) {
-      console.error(err);
       if (err.message.includes("Senha") || err.message.includes("encontrado")) {
-        res.status(406).send(err);
+        res.status(406).send(JSON.stringify(err));
       } else {
-        res.status(503).send(err);
+        console.error(err);
+        res.status(503).send(JSON.stringify(err));
       }
     }
   },
