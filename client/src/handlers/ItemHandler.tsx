@@ -10,8 +10,7 @@
 */
 
 import { useEffect, useState } from "react";
-import { type ClothesModel } from "../components/ClothesList";
-import { b_port } from "../App";
+import { type ClothesModel } from "../database/Schema";
 import { useLocation } from "react-router-dom";
 
 interface DataPoints {

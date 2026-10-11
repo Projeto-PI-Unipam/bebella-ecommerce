@@ -30,7 +30,7 @@ export function PageNavIndicator({
         borderColor: activeBorder,
         boxShadow: `4px 3px 5px rgba(94, 14, 72, 0.6)`,
         display: "flex",
-        alignItems: "anchor-center",
+        alignItems: "center",
         justifyContent: "center",
         visibility: visibility ? "visible" : "hidden",
       }}

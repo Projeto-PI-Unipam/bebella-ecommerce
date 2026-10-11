@@ -1,15 +1,52 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffectEvent, useState } from "react";
+import { hash } from "bcryptjs";
 import "./LoginPage.css";
 import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
-export default function LoginPage() {
+import { saveToken } from "../App";
+
+export default function LoginPage({ redirect }: { redirect?: string }) {
   const [email, setEmail] = useState<string>("");
+  const [pass, setPass] = useState<string>("");
+  const [showPass, toggleShow] = useState<boolean>(false);
+  const [salt, setSalt] = useState<string | null>(null);
   const [status, setStatus] = useState<number>(0);
+  const [isPending, setPending] = useState<boolean>(false);
+  const tryLogin = useEffectEvent(async () => {
+    setPending(true);
+    const hashpass = await hash(pass, salt);
+    const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/login";
+    const response = await fetch(endpoint, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+      body: new URLSearchParams({
+        email: email,
+        password: hashpass,
+      }),
+    });
+    if (response.status === 200) {
+      const token = await response.json();
+      saveToken(token);
+      location.assign(redirect || location.origin);
+    } else if (response.status === 406) {
+      alert("Dados incorretos. Verifique a senha inserida!");
+    } else {
+      console.error(response.statusText);
+    }
+    setPending(false);
+    return;
+  });
   const checkUser = useEffectEvent(async () => {
+    setPending(true);
     const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/check";
     const response = await fetch(endpoint, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       method: "POST",
-      body: JSON.stringify({
+      body: new URLSearchParams({
         email: email,
       }),
     });
@@ -17,16 +54,19 @@ export default function LoginPage() {
       console.error(response.statusText);
     } else {
       if (response.status === 200) {
+        const res_salt: string = await response.json();
+        setSalt(res_salt);
         setStatus(1);
-      } else if (response.status === 204) {
+      } else if (response.status === 206) {
         setStatus(2);
       }
     }
+    setPending(false);
+    return;
   });
-  useEffect(() => {
-    const botao = document.getElementById("botaoContinuar");
-    botao!.addEventListener("click", checkUser);
-  }, []);
+  /* const createUser = useEffectEvent(async () => {
+    const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/register";
+  }); */
 
   return (
     <div className="login-page">
@@ -138,7 +178,12 @@ export default function LoginPage() {
                 fontSize: "0.8rem",
               }}
             >
-              <button type="button" className="login-botao" id="botaoContinuar">
+              <button
+                type="button"
+                className="login-botao"
+                id="botaoContinuar"
+                onClick={() => checkUser()}
+              >
                 {"Continuar"}
               </button>
             </div>
@@ -146,6 +191,30 @@ export default function LoginPage() {
         </div>
         <div style={{ visibility: status === 1 ? "visible" : "hidden" }}>
           {/*pagina de login com senha*/}
+          <input
+            type="password"
+            onChange={(event) => setPass(event.target.value)}
+            value={pass}
+            style={{
+              background: "#fff",
+              width: "100%",
+              height: "calc(1.5rem + 3svh)",
+              boxSizing: "border-box",
+              border: "1px solid #f6bebf",
+              borderRadius: "12px",
+              fontFamily: "Prompt",
+              fontSize: "calc(0.75rem + 1svh)",
+              color: "#000",
+            }}
+          />
+          <button
+            type="button"
+            className="login-botao"
+            id="botaoContinuar"
+            onClick={() => tryLogin()}
+          >
+            {"Logar"}
+          </button>
         </div>
 
         <div style={{ visibility: status === 2 ? "visible" : "hidden" }}>

@@ -1,26 +1,11 @@
 import { useEffect, useState } from "react";
+import { CaretDownIcon } from "@phosphor-icons/react/dist/csr/CaretDown";
 import { PageNavButton, PageNavIndicator } from "../components/PageButton";
 import { useLocation } from "react-router-dom";
-import { b_port } from "../App";
 import { ObjectId } from "bson";
 import "../assets/fonts/fonts.css";
 import ProductCard from "../components/ProductCard";
-
-type size = string | number;
-const sizes = ["PP", "P", "M", "G", "GG"];
-
-export interface ClothesModel {
-  id: ObjectId;
-  db_id: string;
-  name: string;
-  brand: string;
-  category: string;
-  size_data: size[];
-  description?: string;
-  in_stock: number;
-  pic_url?: string[];
-  price: number;
-}
+import { type ClothesModel, type size, sizes } from "../database/Schema";
 
 const test: ClothesModel = {
   id: new ObjectId(),
@@ -72,6 +57,7 @@ export default function SearchPage() {
   const [currentPage, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(Math.ceil(itemCount / perPage));
+  const [category, setCategory] = useState<null | string>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -115,58 +101,52 @@ export default function SearchPage() {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0)",
-        display: "flex",
-        flexDirection: "column",
-        zIndex: 0,
-      }}
-    >
-      <div
-        className="grid grid-cols-1 md:grid-cols-3 w-content-fit min-h-screen h-full pl-16 pr-16 pt-20 pb-20 gap-x-12 gap-y-16 justify-center justify-items-start place-self-center"
-        /*style={{
-          overscrollBehavior: "none",
-          width: "100%",
-          minHeight: "100svh",
-          flexGrow: 1,
-          backgroundColor: "#fff",
-          display: "grid",
-          //flexDirection: "row",
-        }}*/
-      >
+    <div className="w-full h-full bg-transparent flex flex-col z-0">
+      <div className="flex flex-col w-full h-60 bg-rose-50 pt-6">
+        <div className="flex flex-row w-full h-1/6 items-center">
+          <span className="ml-8 text-xl text-neutral-500 font-[Prompt]">
+            <span
+              onClick={() => window.location.replace(window.origin)}
+              className="cursor-pointer hover:text-rose-600"
+            >
+              {"Início".toUpperCase()}
+            </span>
+            {(
+              " / Busca / " + location.search.replace(/\?s=/gi, "")
+            ).toUpperCase()}
+          </span>
+        </div>
+        <div className="flex flex-row w-full h-2/5 mt-2 items-center justify-between">
+          <span className="ml-8 text-7xl text-neutral-800 font-[Boston_Angel]">
+            {"Titulo"}
+          </span>
+          <div className="bg-transparent border-solid border-2 border-[#f6bebf] w-48 h-12 mr-12 mt-16 rounded-lg flex flex-row items-center justify-between pl-2 pr-2">
+            <span className="text-sm font-medium text-neutral-800 font-[Prompt]">
+              {"Mais Relevantes".toUpperCase()}
+            </span>
+            <CaretDownIcon color="#98263e" />
+          </div>
+        </div>
+        <div className="flex flex-row w-full h-1/8">
+          <span className="ml-8 mt-3 text-base text-neutral-600 font-[Prompt]">
+            {"10 Resultados".toUpperCase()}
+          </span>
+        </div>
+        <div className="flex flex-row w-full h-1/2 bg-rose-50 mt-4 items-center justify-center gap-4">
+          {["Camisas", "Shorts", "Calças", "Vestidos", "Saias"].map((s) => (
+            <div className="rounded-2xl border-[#f6bebf] border-2 pl-3 pr-3 pt-1 pb-1 cursor-pointer transform hover:scale-110">
+              <span className="text-neutral-800 text-base font-[Prompt]">
+                {s}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 w-content-fit min-h-screen h-full pl-16 pr-16 pt-20 pb-20 gap-x-12 gap-y-16 justify-center justify-items-start place-self-center">
         {clothesList()}
       </div>
-      <div
-        style={{
-          width: "100%",
-          height: "52px",
-          backgroundColor: "#ddd",
-          display: "flex",
-          placeSelf: "anchor-center",
-          flexDirection: "row",
-          position: "relative",
-          flexWrap: "nowrap",
-          alignItems: "anchor-center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            width: "60%",
-            height: "52px",
-            backgroundColor: "#ddd",
-            display: "flex",
-            placeSelf: "anchor-center",
-            flexDirection: "row",
-            position: "relative",
-            flexWrap: "nowrap",
-            alignItems: "anchor-center",
-            justifyContent: "center",
-          }}
-        >
+      <div className="w-full h-13 bg-neutral-300 flex place-self-center flex-row relative flex-nowrap items-center justify-center">
+        <div className="w-3/5 h-13 bg-transparent flex place-self-center flex-row relative flex-nowrap items-center justify-center">
           <PageNavButton
             label="<"
             visibility={currentPage > 1}

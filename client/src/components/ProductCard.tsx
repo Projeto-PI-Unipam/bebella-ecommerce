@@ -1,4 +1,4 @@
-import type { ClothesModel } from "../pages/SearchPage";
+import { type ClothesModel } from "../database/Schema";
 
 function fmt_price(orig: number): string {
   return `R$${orig.toLocaleString("pt-BR", {
