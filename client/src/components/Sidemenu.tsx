@@ -41,12 +41,19 @@ export default function Sidemenu() {
           }}
         >
           <motion.button
+            className={
+              !isActive && !isReady
+                ? "mr-[8px] cursor-pointer transition delay-8 duration-140 ease-out hover:scale-110 hover:-translate-y-[2px]"
+                : ""
+            }
             style={{
               position: "absolute",
               verticalAlign: "middle",
-              top: 2,
-              left: 0,
+              top: 0,
+              left: 4,
               borderStyle: "none",
+              width: "40px",
+              height: "40px",
             }}
             animate={{
               backgroundColor: isActive ? lightBgActive : pinkBgDefault,

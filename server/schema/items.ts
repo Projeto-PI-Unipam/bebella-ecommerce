@@ -13,7 +13,13 @@ export interface ClothingData {
   description?: string;
   in_stock: number;
   price: number;
-  pic_url?: string;
+  pic_url?: string[];
+}
+
+export interface CartProd {
+  id: ObjectId;
+  amount: number;
+  size: size;
 }
 
 const db_coll = db.collection("items");

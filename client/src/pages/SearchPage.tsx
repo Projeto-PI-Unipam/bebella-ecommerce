@@ -1,40 +1,43 @@
 import { useEffect, useState } from "react";
+import { CaretDownIcon } from "@phosphor-icons/react/dist/csr/CaretDown";
 import { PageNavButton, PageNavIndicator } from "../components/PageButton";
 import { useLocation } from "react-router-dom";
-import { b_port } from "../App";
 import { ObjectId } from "bson";
+import "../assets/fonts/fonts.css";
+import ProductCard from "../components/ProductCard";
+import { type ClothesModel, type size, sizes } from "../database/Schema";
 
-type size = string | number;
-const sizes = ["PP", "P", "M", "G", "GG"];
+const test: ClothesModel = {
+  id: new ObjectId(),
+  db_id: new ObjectId().toString(),
+  name: "Roupa Teste",
+  brand: "Marca Proto",
+  category: "Categoria Zero",
+  size_data: (sizes as size[]).concat([40, 42] as size[]),
+  description: "Produto para testar a pesquisa do site",
+  in_stock: 3,
+  pic_url: [
+    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
+    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
+  ],
+  price: 200.5,
+};
 
-export interface ClothesModel {
-  id: ObjectId;
-  db_id: string;
-  name: string;
-  brand: string;
-  category: string;
-  size_data: size[];
-  description?: string;
-  in_stock: number;
-  pic_url?: string;
-}
-
-const Clothing = ({ data }: { data: ClothesModel }) => (
-  <tr
-    key={data.db_id}
-    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-  >
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.name}
-    </td>
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.description}
-    </td>
-    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-      {data.category}
-    </td>
-  </tr>
-);
+const test2: ClothesModel = {
+  id: new ObjectId(),
+  db_id: new ObjectId().toString(),
+  name: "Segundo Teste",
+  brand: "Topíssimo",
+  category: "Incrível",
+  size_data: (sizes as size[]).concat([40, 42] as size[]),
+  description: "Produto para testar a pesquisa do site, de novo!",
+  in_stock: 3,
+  pic_url: [
+    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
+    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
+  ],
+  price: 120,
+};
 
 function formatSearch(term: string) {
   const searchRegex = new RegExp(/(\?s=)(.+)/);
@@ -54,11 +57,12 @@ export default function SearchPage() {
   const [currentPage, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(Math.ceil(itemCount / perPage));
+  const [category, setCategory] = useState<null | string>(null);
   const location = useLocation();
 
   useEffect(() => {
     async function getItems() {
-      console.log(location.search, formatSearch(location.search));
+      /*console.log(location.search, formatSearch(location.search));
       const endpoint = `http://localhost:${b_port}/items/search/${formatSearch(location.search)}`;
       const results = await fetch(endpoint);
       if (!results.ok) {
@@ -67,7 +71,11 @@ export default function SearchPage() {
       const fmt_res = await results.json();
       console.log(fmt_res);
       setItemCount(fmt_res[1]);
-      setItems(fmt_res[0]);
+      setItems(fmt_res[0]);*/
+
+      // test
+      setItemCount(5);
+      setItems([test, test2, test, test2, test]);
     }
     getItems();
     return;
@@ -85,79 +93,60 @@ export default function SearchPage() {
         pic_url: c.pic_url,
         size_data: c.size_data,
         description: c.description,
+        price: c.price,
       };
-      return <Clothing data={d} />;
+      return <ProductCard item={d} />;
     });
     return lst;
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0)",
-        display: "flex",
-        flexDirection: "column",
-        zIndex: 0,
-      }}
-    >
-      <div
-        style={{
-          overscrollBehavior: "none",
-          width: "100%",
-          minHeight: "100svh",
-          flexGrow: 1,
-          backgroundColor: "#fff",
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
-        <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
-            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Nome
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Descrição
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                Categoria
-              </th>
-            </tr>
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0">{clothesList()}</tbody>
-        </table>
+    <div className="w-full h-full bg-transparent flex flex-col z-0">
+      <div className="flex flex-col w-full h-60 bg-rose-50 pt-6">
+        <div className="flex flex-row w-full h-1/6 items-center">
+          <span className="ml-8 text-xl text-neutral-500 font-[Prompt]">
+            <span
+              onClick={() => window.location.replace(window.origin)}
+              className="cursor-pointer hover:text-rose-600"
+            >
+              {"Início".toUpperCase()}
+            </span>
+            {(
+              " / Busca / " + location.search.replace(/\?s=/gi, "")
+            ).toUpperCase()}
+          </span>
+        </div>
+        <div className="flex flex-row w-full h-2/5 mt-2 items-center justify-between">
+          <span className="ml-8 text-7xl text-neutral-800 font-[Boston_Angel]">
+            {"Titulo"}
+          </span>
+          <div className="bg-transparent border-solid border-2 border-[#f6bebf] w-48 h-12 mr-12 mt-16 rounded-lg flex flex-row items-center justify-between pl-2 pr-2">
+            <span className="text-sm font-medium text-neutral-800 font-[Prompt]">
+              {"Mais Relevantes".toUpperCase()}
+            </span>
+            <CaretDownIcon color="#98263e" />
+          </div>
+        </div>
+        <div className="flex flex-row w-full h-1/8">
+          <span className="ml-8 mt-3 text-base text-neutral-600 font-[Prompt]">
+            {"10 Resultados".toUpperCase()}
+          </span>
+        </div>
+        <div className="flex flex-row w-full h-1/2 bg-rose-50 mt-4 items-center justify-center gap-4">
+          {["Camisas", "Shorts", "Calças", "Vestidos", "Saias"].map((s) => (
+            <div className="rounded-2xl border-[#f6bebf] border-2 pl-3 pr-3 pt-1 pb-1 cursor-pointer transform hover:scale-110">
+              <span className="text-neutral-800 text-base font-[Prompt]">
+                {s}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div
-        style={{
-          width: "100%",
-          height: "52px",
-          backgroundColor: "#ddd",
-          display: "flex",
-          placeSelf: "anchor-center",
-          flexDirection: "row",
-          position: "relative",
-          flexWrap: "nowrap",
-          alignItems: "anchor-center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            width: "60%",
-            height: "52px",
-            backgroundColor: "#ddd",
-            display: "flex",
-            placeSelf: "anchor-center",
-            flexDirection: "row",
-            position: "relative",
-            flexWrap: "nowrap",
-            alignItems: "anchor-center",
-            justifyContent: "center",
-          }}
-        >
+      <div className="grid grid-cols-1 md:grid-cols-3 w-content-fit min-h-screen h-full pl-16 pr-16 pt-20 pb-20 gap-x-12 gap-y-16 justify-center justify-items-start place-self-center">
+        {clothesList()}
+      </div>
+      <div className="w-full h-13 bg-neutral-300 flex place-self-center flex-row relative flex-nowrap items-center justify-center">
+        <div className="w-3/5 h-13 bg-transparent flex place-self-center flex-row relative flex-nowrap items-center justify-center">
           <PageNavButton
             label="<"
             visibility={currentPage > 1}

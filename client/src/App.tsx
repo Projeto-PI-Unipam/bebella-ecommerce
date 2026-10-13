@@ -1,13 +1,14 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-// import Navbar from "./components/Navbar";
 import Topbar from "./components/Topbar";
 import { useEffect, useState } from "react";
 import { ObjectId } from "bson";
 import ClothesList from "./components/ClothesList";
 import SearchPage from "./pages/SearchPage";
 import HomePage from "./pages/HomePage";
+import CheckoutPage from "./pages/CheckoutPage";
 import ItemHandler from "./handlers/ItemHandler";
 import LoginPage from "./pages/LoginPage";
+import Footer from "./components/Footer";
 
 export const b_port = 5180;
 
@@ -26,8 +27,12 @@ export interface UserModel {
   past_orders?: string[];
 }
 
-function saveToken(token: string) {
+export function saveToken(token: string) {
   sessionStorage.setItem("token", JSON.stringify(token));
+}
+
+function delToken() {
+  sessionStorage.setItem("token", null);
 }
 
 function getToken() {
@@ -46,74 +51,33 @@ export default function App() {
   useEffect(() => {
     async function getUser() {
       if (userToken && userToken.length >= 1) {
-        const check = await fetch(
-          `http://localhost:${b_port}/userapi/parsetoken`,
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            method: "POST",
-            body: new URLSearchParams({
-              token: userToken,
-            }),
+        const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/parsetoken";
+        const check = await fetch(endpoint, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
           },
-        );
+          method: "POST",
+          body: new URLSearchParams({
+            token: userToken,
+          }),
+        });
         if (check.ok) {
           setToken(userToken);
           saveToken(userToken);
           activateSession(userToken);
-        }
-      } else {
-        const user_exists = await fetch(
-          `http://localhost:${b_port}/userapi/check`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              email: "admin2@admin2.com",
-            }),
-          },
-        );
-        if (!user_exists.ok) {
-          console.error(user_exists.statusText);
-          return;
-        } else if (!user_exists.json()) {
-          alert("Usuário não cadastrado");
-          return;
         } else {
-          const user_data = await fetch(
-            `http://localhost:${b_port}/userapi/login`,
-            {
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              method: "POST",
-              body: new URLSearchParams({
-                email: "admin2@admin2.com",
-                password: "teste",
-              }),
-            },
-          );
-          if (!user_data.ok) {
-            console.error(user_data.statusText);
-          } else if (!user_data) {
-            alert("Informações Incorretas");
-          } else {
-            const res = await user_data.text();
-            setToken(res);
-            saveToken(res);
-            activateSession(res);
-          }
+          delToken();
+          await getUser();
+          return;
         }
       }
     }
     getUser();
     return;
-  }, [location.pathname, sessionStorage.length]);
+  }, [location.href, location, sessionStorage.length]);
   return (
-    <div className="w-full h-full p-6">
-      {!location.pathname.includes("login") ? (
-        <Topbar host={activeSession} />
-      ) : null}
+    <div>
+      {!location.pathname.includes("login") && <Topbar host={activeSession} />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -121,11 +85,16 @@ export default function App() {
           <Route path="/browse" element={<ClothesList />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
+            path="/checkout"
+            element={<CheckoutPage host={activeSession} />}
+          />
+          <Route
             path="/admin/items"
             element={<ItemHandler host={activeSession} />}
           />
         </Routes>
       </BrowserRouter>
+      {!location.pathname.includes("login") && <Footer />}
     </div>
   );
 }

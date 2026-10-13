@@ -1,10 +1,11 @@
-import { randomBytes, pbkdf2Sync } from "node:crypto";
-import { Strategy } from "passport-local";
+//import { randomBytes, pbkdf2Sync } from "node:crypto";
+import { compareSync, genSaltSync, hashSync } from "bcryptjs";
 import { ObjectId } from "mongodb";
-// import expressjwt from "express-jwt";
 import jwt from "jsonwebtoken";
 import db from "../db/connection.ts";
 import dotenv from "dotenv";
+import { type WebSale } from "./sales.ts";
+import { type CartProd } from "./items.ts";
 
 dotenv.config();
 
@@ -18,9 +19,9 @@ export interface UserData {
   birth_date: Date;
   picture_url?: string;
   wishlist_ids?: string[];
-  cart_products?: string[];
-  order_addresses?: string[];
-  past_orders?: string[];
+  cart_products?: CartProd[];
+  order_addresses?: string[][];
+  past_orders?: WebSale[];
 }
 
 const db_coll = db.collection("users");
@@ -30,8 +31,7 @@ export async function userExists(user_email: string, returning: boolean) {
     const user = await db_coll.findOne<UserData>({
       email: { $eq: user_email },
     });
-    console.log(user);
-    if (!user) {
+    if (user === null) {
       return false;
     } else {
       if (returning) {
@@ -48,14 +48,8 @@ export async function userExists(user_email: string, returning: boolean) {
 
 export async function hashPassword(password: string) {
   try {
-    const new_salt = randomBytes(16).toString("hex");
-    const new_hash = pbkdf2Sync(
-      password,
-      new_salt,
-      2400,
-      64,
-      "sha256",
-    ).toString("hex");
+    const new_salt = genSaltSync(16);
+    const new_hash = hashSync(password, new_salt);
     return [new_salt, new_hash];
     //await db_coll.updateOne(query, { $set: {hash: new_hash, salt: new_salt}});
   } catch (err) {
@@ -64,22 +58,16 @@ export async function hashPassword(password: string) {
   }
 }
 
-export async function checkPassword(user_email: string, password: string) {
+/* async function checkPassword(user_email: string, password: string) {
   try {
     const obj = await db_coll.findOne<UserData>({ email: { $eq: user_email } });
-    const hash_try = pbkdf2Sync(
-      password,
-      obj!.salt,
-      2400,
-      64,
-      "sha256",
-    ).toString("hex");
-    return hash_try === obj!.hash;
+    // const hash_try = compareSync(password, obj!.hash);
+    //return hash_try;
   } catch (err) {
     console.error(err);
     throw err;
   }
-}
+} */
 
 export function genToken(user_data: UserData) {
   const expiry = new Date();
@@ -107,14 +95,8 @@ export async function addUser(
       .find({ email: { $eq: user_email } })
       .toArray();
     if (test_exist && test_exist.length === 0) {
-      const new_salt = randomBytes(16).toString("hex");
-      const new_hashpass = pbkdf2Sync(
-        password,
-        new_salt,
-        2400,
-        64,
-        "sha256",
-      ).toString("hex");
+      const new_salt = genSaltSync(16);
+      const new_hashpass = hashSync(password, new_salt);
       const new_user: UserData = {
         id: new ObjectId(),
         func_id: 165,
@@ -164,7 +146,7 @@ export async function loginUser(user_email: string, password: string) {
         email: { $eq: user_email },
       });
       if (result?.email) {
-        if (await checkPassword(user_email, password)) {
+        if (password === result!.hash) {
           return result;
         } else {
           throw new Error("Senha incorreta");

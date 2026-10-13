@@ -2,21 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ObjectId } from "bson";
 import { b_port } from "../App";
-
-type size = string | number;
-const sizes = ["PP", "P", "M", "G", "GG"];
-
-export interface ClothesModel {
-  id: ObjectId;
-  db_id: string;
-  name: string;
-  brand: string;
-  category: string;
-  size_data: size[];
-  description?: string;
-  in_stock: number;
-  pic_url?: string;
-}
+import { type ClothesModel } from "../database/Schema";
 
 const Clothing = ({ data }: { data: ClothesModel }) => (
   <tr
@@ -72,6 +58,7 @@ export default function ClothesList() {
         pic_url: c.pic_url,
         size_data: c.size_data,
         description: c.description,
+        price: c.price,
       };
       return <Clothing data={d} />;
     });
