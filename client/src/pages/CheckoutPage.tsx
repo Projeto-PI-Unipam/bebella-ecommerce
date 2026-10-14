@@ -28,10 +28,12 @@ export default function CheckoutPage({ host }: { host: string | null }) {
             {`${itemAmount} ${itemAmount === 1 ? "Item" : "Itens"}`.toUpperCase()}
           </span>
         </div>
-        <div className="flex flex-col w-full lg:h-[85dvh] overflow-scroll bg-sky-400">
+        <div className="flex flex-col w-full lg:h-[85dvh] overflow-y-scroll lg:overscroll-contain bg-sky-400 scrollbar-thumb-neutral-50 scrollbar-track-neutral-400 focus:scrollbar-thumb-neutral-600 active:scrollbar-thumb-rose-400">
           <ul>
             {Array.from({ length: itemAmount }).map((_, i) => (
-              <SavedCard key={i + 1} />
+              <li>
+                <SavedCard key={i + 1} ind={i + 1} />
+              </li>
             ))}
           </ul>
         </div>

@@ -5,13 +5,24 @@ import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
 import { saveToken } from "../App";
 
-export default function LoginPage({ redirect }: { redirect?: string }) {
+export default function LoginPage({
+  redirect,
+  setter,
+}: {
+  redirect?: string;
+  setter: Function;
+}) {
   const [email, setEmail] = useState<string>("");
   const [pass, setPass] = useState<string>("");
   const [showPass, toggleShow] = useState<boolean>(false);
   const [salt, setSalt] = useState<string | null>(null);
   const [status, setStatus] = useState<number>(0);
   const [isPending, setPending] = useState<boolean>(false);
+  if (redirect) {
+    location.replace(
+      location.origin + ("/login?dir=" + redirect.replace("/", "")),
+    );
+  }
   const tryLogin = useEffectEvent(async () => {
     setPending(true);
     const hashpass = await hash(pass, salt);
@@ -29,7 +40,8 @@ export default function LoginPage({ redirect }: { redirect?: string }) {
     if (response.status === 200) {
       const token = await response.json();
       saveToken(token);
-      location.assign(redirect || location.origin);
+      setter(token);
+      location.assign(location.origin + location.search.replace("?dir=", "/"));
     } else if (response.status === 406) {
       alert("Dados incorretos. Verifique a senha inserida!");
     } else {
@@ -68,6 +80,9 @@ export default function LoginPage({ redirect }: { redirect?: string }) {
     const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/register";
   }); */
 
+  if (!location.href.includes("/login")) {
+    return <></>;
+  }
   return (
     <div className="login-page">
       <div className="login-padrao"></div>
@@ -120,74 +135,74 @@ export default function LoginPage({ redirect }: { redirect?: string }) {
           >
             digite um e-mail para continuar
           </p>
-          <form>
-            <label>
-              <p
-                style={{
-                  display: "flex",
-                  color: "#000",
-                  fontFamily: "Prompt",
-                  marginTop: "0px",
-                  paddingTop: "4dvh",
-                  textIndent: 4,
-                }}
-              >
-                e-mail*
-              </p>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{
-                  background: "#fff",
-                  width: "100%",
-                  height: "calc(1.5rem + 3svh)",
-                  boxSizing: "border-box",
-                  border: "1px solid #f6bebf",
-                  borderRadius: "12px",
-                  fontFamily: "Prompt",
-                  fontSize: "calc(0.75rem + 1svh)",
-                  color: "#000",
-                }}
-              />
-            </label>
-            <div
+          {/*<form>*/}
+          <label>
+            <p
               style={{
-                fontFamily: "Prompt",
-                width: "calc(15rem + 5dvw)",
+                display: "flex",
                 color: "#000",
-                textAlign: "left",
-                paddingTop: "2dvh",
-                paddingBottom: "2dvh",
-                textWrap: "wrap",
-                breakInside: "avoid",
-              }}
-            >
-              <p className="login-termos">
-                {"Ao clicar em continuar, afirmo que concordo com a "}
-                <a href="#">{"Política de Privacidade"}</a>
-                {" e os "}
-                <a href="#">{"Termos de Uso"}</a>
-                {" da Bebella Boutique."}
-              </p>
-            </div>
-            <div
-              style={{
                 fontFamily: "Prompt",
-                fontWeight: 500,
-                fontSize: "0.8rem",
+                marginTop: "0px",
+                paddingTop: "4dvh",
+                textIndent: 4,
               }}
             >
-              <button
-                type="button"
-                className="login-botao"
-                id="botaoContinuar"
-                onClick={() => checkUser()}
-              >
-                {"Continuar"}
-              </button>
-            </div>
-          </form>
+              e-mail*
+            </p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                background: "#fff",
+                width: "100%",
+                height: "calc(1.5rem + 3svh)",
+                boxSizing: "border-box",
+                border: "1px solid #f6bebf",
+                borderRadius: "12px",
+                fontFamily: "Prompt",
+                fontSize: "calc(0.75rem + 1svh)",
+                color: "#000",
+              }}
+            />
+          </label>
+          <div
+            style={{
+              fontFamily: "Prompt",
+              width: "calc(15rem + 5dvw)",
+              color: "#000",
+              textAlign: "left",
+              paddingTop: "2dvh",
+              paddingBottom: "2dvh",
+              textWrap: "wrap",
+              breakInside: "avoid",
+            }}
+          >
+            <p className="login-termos">
+              {"Ao clicar em continuar, afirmo que concordo com a "}
+              <a href="#">{"Política de Privacidade"}</a>
+              {" e os "}
+              <a href="#">{"Termos de Uso"}</a>
+              {" da Bebella Boutique."}
+            </p>
+          </div>
+          <div
+            style={{
+              fontFamily: "Prompt",
+              fontWeight: 500,
+              fontSize: "0.8rem",
+            }}
+          >
+            <button
+              type="button"
+              className="login-botao"
+              id="botaoContinuar"
+              onClick={() => checkUser()}
+            >
+              {"Continuar"}
+            </button>
+          </div>
+          {/*</form>*/}
         </div>
         <div style={{ visibility: status === 1 ? "visible" : "hidden" }}>
           {/*pagina de login com senha*/}

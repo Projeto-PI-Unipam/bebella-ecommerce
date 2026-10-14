@@ -43,8 +43,8 @@ function getToken() {
 }
 
 export default function App() {
-  const [activeSession, activateSession] = useState<string | null>(null);
   const [userToken, setToken] = useState(getToken());
+  const [activeSession, activateSession] = useState<string | null>(userToken);
 
   useEffect(() => {
     async function getUser() {
@@ -62,7 +62,9 @@ export default function App() {
         if (check.ok) {
           setToken(userToken);
           saveToken(userToken);
-          activateSession(userToken);
+          if (userToken) {
+            activateSession(userToken);
+          }
         } else {
           delToken();
           await getUser();
@@ -72,7 +74,8 @@ export default function App() {
     }
     getUser();
     return;
-  }, [location.href, location, sessionStorage.length]);
+  }, [location.href, location, sessionStorage.length, location.pathname]);
+
   return (
     <div>
       {!location.pathname.includes("login") && <Topbar host={activeSession} />}
@@ -80,12 +83,33 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
+<<<<<<< HEAD
           {/*<Route path="/browse" element={<ClothesList />} />*/}
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/user/checkout"
             element={<CheckoutPage host={activeSession} />}
+=======
+          <Route path="/browse" element={<ClothesList />} />
+          <Route
+            path="/login"
+            element={<LoginPage setter={activateSession} />}
+>>>>>>> ee2b058 (improving server schema and client routing)
           />
+          {activeSession && (
+            <Route
+              path="/checkout"
+              element={<CheckoutPage host={activeSession} />}
+            />
+          )}
+          {!activeSession && (
+            <Route
+              path="/checkout"
+              element={
+                <LoginPage redirect="/checkout" setter={activateSession} />
+              }
+            />
+          )}
           <Route
             path="/admin/items"
             element={<ItemHandler host={activeSession} />}

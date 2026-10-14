@@ -132,6 +132,7 @@ function Topbar({ host }: { host: string | null }) {
             color="#98263e"
             weight="duotone"
             size={28}
+            onClick={() => location.assign(location.origin + "/checkout")}
           />
         </div>
       </div>

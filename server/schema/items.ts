@@ -17,6 +17,7 @@ export interface ClothingData {
 }
 
 export interface CartProd {
+  _id?: ObjectId;
   amount: number;
   size: size;
 }
