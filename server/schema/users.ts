@@ -1,5 +1,4 @@
-//import { randomBytes, pbkdf2Sync } from "node:crypto";
-import { compareSync, genSaltSync, hashSync } from "bcryptjs";
+import { genSaltSync, hashSync } from "bcryptjs";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import db from "../db/connection.ts";
@@ -10,7 +9,7 @@ import { type CartProd } from "./items.ts";
 dotenv.config();
 
 export interface UserData {
-  id?: ObjectId;
+  _id?: ObjectId;
   func_id?: number;
   name: string;
   email: string;
@@ -74,7 +73,7 @@ export function genToken(user_data: UserData) {
   expiry.setDate(expiry.getDate() + 1);
   return jwt.sign(
     {
-      id: user_data.id,
+      id: user_data._id,
       email: user_data.email,
       name: user_data.name,
       func: user_data.func_id || 165,
@@ -98,7 +97,7 @@ export async function addUser(
       const new_salt = genSaltSync(16);
       const new_hashpass = hashSync(password, new_salt);
       const new_user: UserData = {
-        id: new ObjectId(),
+        _id: new ObjectId(),
         func_id: 165,
         name: name,
         email: user_email,

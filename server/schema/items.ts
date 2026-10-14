@@ -5,7 +5,7 @@ export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
 
 export interface ClothingData {
-  id: ObjectId;
+  _id?: ObjectId;
   name: string;
   brand: string;
   category: string;
@@ -17,7 +17,6 @@ export interface ClothingData {
 }
 
 export interface CartProd {
-  id: ObjectId;
   amount: number;
   size: size;
 }
@@ -37,21 +36,11 @@ export async function addItem(new_item: ClothingData) {
 export async function changeItem(update: ClothingData) {
   try {
     await db_coll.updateOne(
-      { _id: { $eq: update.id } },
+      { _id: { $eq: update._id } },
       {
         $set: update,
       },
     );
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
-
-export async function countItems() {
-  try {
-    const getRes = await db_coll.countDocuments({});
-    return getRes;
   } catch (err) {
     console.error(err);
     throw err;

@@ -2,15 +2,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Topbar from "./components/Topbar";
 import { useEffect, useState } from "react";
 import { ObjectId } from "bson";
-import ClothesList from "./components/ClothesList";
+//import ClothesList from "./components/ClothesList";
 import SearchPage from "./pages/SearchPage";
 import HomePage from "./pages/HomePage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ItemHandler from "./handlers/ItemHandler";
 import LoginPage from "./pages/LoginPage";
 import Footer from "./components/Footer";
-
-export const b_port = 5180;
 
 export interface UserModel {
   id?: ObjectId;
@@ -82,10 +80,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/browse" element={<ClothesList />} />
+          {/*<Route path="/browse" element={<ClothesList />} />*/}
           <Route path="/login" element={<LoginPage />} />
           <Route
-            path="/checkout"
+            path="/user/checkout"
             element={<CheckoutPage host={activeSession} />}
           />
           <Route

@@ -5,7 +5,10 @@ import SavedCard from "../components/SavedCard";
 export default function CheckoutPage({ host }: { host: string | null }) {
   const [itemAmount, countItems] = useState(10); //useState(0);
   const [cep, cepSet] = useState<number | null>(null);
-  function cepFmt(cep: number): string {
+  function cepFmt(): string {
+    if (!cep) {
+      return "";
+    }
     const cepStr = cep.toString();
     if (cepStr.length > 5) {
       return `${cepStr.slice(0, 5)}-${cepStr.slice(5)}`;
@@ -42,8 +45,11 @@ export default function CheckoutPage({ host }: { host: string | null }) {
           <input
             className="w-full h-8 rounded-2xl bg-neutral-200 box-border border-neutral-400"
             type="text"
-            value={cepFmt(cep)}
-            onChange={(event) => cepSet(parseInt(event.target.value) || 0)}
+            maxLength={9}
+            value={cepFmt()}
+            onChange={(event) =>
+              cepSet(parseInt(event.target.value.replace(/[\D]/g, "")) || 0)
+            }
           />
         </div>
         <div className="h-1/3 w-full bg-sky-400"></div>

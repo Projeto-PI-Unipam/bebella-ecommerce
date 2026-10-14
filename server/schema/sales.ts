@@ -39,7 +39,7 @@ interface SaleReview {
 }
 
 export interface WebSale {
-  id: ObjectId;
+  _id?: ObjectId;
   amount: number;
   products: CartProd[];
   address: ShippingInfo;
@@ -61,7 +61,7 @@ export async function register_sale(sale: WebSale) {
 export async function add_review(sale: WebSale, review: SaleReview) {
   try {
     await db_coll.updateOne(
-      { id: sale.id },
+      { id: sale._id },
       {
         $set: {
           review: review,

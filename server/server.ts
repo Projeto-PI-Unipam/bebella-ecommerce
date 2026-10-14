@@ -1,9 +1,7 @@
 import express, { type Request, type Response, type Express } from "express";
 import { ObjectId } from "mongodb";
 import cors from "cors";
-//import passport from "passport";
 import {
-  //LocalStrategy,
   loginUser,
   genToken,
   userExists,
@@ -19,8 +17,6 @@ import {
   type size,
   addItem,
   changeItem,
-  countItems,
-  //countItems,
 } from "./schema/items.ts";
 import db from "./db/connection.ts";
 
@@ -64,7 +60,7 @@ app.get("/", async (_: Request, res: Response) => res.send("ok"));
 app.get("/browse", async (_: Request, res: Response) => {
   try {
     let results = await items_db.find({}).toArray();
-    let count = await countItems();
+    let count = await items_db.estimatedDocumentCount();
     res.status(200).send([results, count]);
   } catch (err) {
     console.error(err);
@@ -75,22 +71,37 @@ app.get("/browse", async (_: Request, res: Response) => {
 app.get("/items/all", async (_: Request, res: Response) => {
   try {
     let results = await items_db.find({}).toArray();
-    let count = await countItems();
-    res.status(200).send([results, count]);
+    let count = await items_db.estimatedDocumentCount();
+    res.status(200).send(JSON.stringify([results, count]));
   } catch (err) {
     console.error(err);
     res.status(503).send("Erro ao buscar itens");
   }
 });
 
+app.get(
+  "/items/category/:categoryTerm",
+  async (req: Request, res: Response) => {
+    try {
+      const search_reg = new RegExp(`.*${req.params.categoryTerm}.*`, `gi`);
+      const query = { category: search_reg };
+      const results = await items_db.find(query).toArray();
+      const count = await items_db.countDocuments(query);
+      res.status(200).send(JSON.stringify([results, count]));
+    } catch (err) {
+      console.error(err);
+      res.status(503).send("Erro ao filtrar categorias");
+    }
+  },
+);
+
 app.get("/items/search/:searchTerm", async (req: Request, res: Response) => {
   try {
     const search_reg = new RegExp(`.*${req.params.searchTerm}.*`, "gi");
-    let results = await items_db
-      .find({ $or: [{ name: search_reg }, { brand: search_reg }] })
-      .toArray();
-    let count = await countItems();
-    res.status(200).send([results, count]);
+    const query = { $or: [{ name: search_reg }, { brand: search_reg }] };
+    const results = await items_db.find(query).toArray();
+    const count = await items_db.countDocuments(query);
+    res.status(200).send(JSON.stringify([results, count]));
   } catch (err) {
     console.error(err);
     res.status(503).send("Erro ao pesquisar itens");
@@ -101,15 +112,15 @@ app.get(
   "/view/product/:productId",
   async (req: Request<{ productId: string }>, res: Response) => {
     try {
-      let collection = db.collection("items");
-      let prod_id = req.params.productId;
-      let query = collection.find({
+      const collection = db.collection("items");
+      const prod_id = req.params.productId;
+      const query = collection.find({
         _id: { $eq: new ObjectId(prod_id) },
       }).toArray;
       if (!query || query.length === 0) {
         res.status(404).send("Produto não encontrado");
       } else {
-        res.status(200).send(query);
+        res.status(200).send(JSON.stringify(query));
       }
     } catch (err) {
       console.error(err);
@@ -119,7 +130,7 @@ app.get(
 
 app.post(
   "/admin/getproducts",
-  encodedParser,
+  jsonParser,
   async (
     req: Request<{ auth_token: string; stockWarn?: number; category?: string }>,
     res: Response,
@@ -146,7 +157,7 @@ app.post(
             //monthlySoldPoints:
             //monthlyOutPoints:
             //monthlyInPoints:
-            productsCount: await countItems(),
+            productsCount: await items_db.estimatedDocumentCount(),
           };
           res.status(200).send(datapoints);
           return;
@@ -201,7 +212,7 @@ app.post(
     try {
       if (req.body && req.body.email && req.body.password) {
         const result = await loginUser(req.body.email, req.body.password);
-        if (!result || !result.id) {
+        if (!result || !result._id) {
           res.status(406).send();
         } else {
           const new_token = genToken(result);
@@ -248,6 +259,7 @@ app.post(
 
 app.post(
   "/admin/products/new",
+  jsonParser,
   async function (
     req: Request<{
       name: string;
@@ -263,20 +275,18 @@ app.post(
     res: Response,
   ) {
     try {
-      const user_fid: TokenResponse | undefined = authUser(
-        req.params.auth_token,
-      );
+      const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
       if (user_fid && user_fid.func === parseInt(process.env.ADMIN_FID!)) {
         const new_item: ClothingData = {
-          id: new ObjectId(),
-          name: req.params.name,
-          brand: req.params.brand,
-          category: req.params.category,
-          size_data: req.params.size_data,
-          description: req.params.description,
-          in_stock: req.params.in_stock,
-          price: req.params.price,
-          pic_url: req.params.pic_url,
+          _id: new ObjectId(),
+          name: req.body.name,
+          brand: req.body.brand,
+          category: req.body.category,
+          size_data: req.body.size_data,
+          description: req.body.description,
+          in_stock: req.body.in_stock,
+          price: req.body.price,
+          pic_url: req.body.pic_url,
         };
         await addItem(new_item);
         res.status(200).send(new_item);
@@ -293,6 +303,7 @@ app.post(
 
 app.patch(
   "/admin/products/update",
+  jsonParser,
   async function (
     req: Request<{
       id: string;
@@ -309,20 +320,18 @@ app.patch(
     res: Response,
   ) {
     try {
-      const user_fid: TokenResponse | undefined = authUser(
-        req.params.auth_token,
-      );
+      const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
       if (user_fid && user_fid.func === parseInt(process.env.ADMIN_FID!)) {
         const updated_item: ClothingData = {
-          id: new ObjectId(req.params.id),
-          name: req.params.name,
-          brand: req.params.brand,
-          category: req.params.category,
-          size_data: req.params.size_data,
-          description: req.params.description,
-          in_stock: req.params.in_stock,
-          pic_url: req.params.pic_url,
-          price: req.params.price,
+          _id: new ObjectId(req.body.id),
+          name: req.body.name,
+          brand: req.body.brand,
+          category: req.body.category,
+          size_data: req.body.size_data,
+          description: req.body.description,
+          in_stock: req.body.in_stock,
+          pic_url: req.body.pic_url,
+          price: req.body.price,
         };
         await changeItem(updated_item);
         res.status(200).send(updated_item);
