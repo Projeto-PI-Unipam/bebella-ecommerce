@@ -1,11 +1,5 @@
 import { type ClothesModel } from "../database/Schema";
-
-function fmt_price(orig: number): string {
-  return `R$${orig.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
+import { fmt_price } from "../database/Utils";
 
 export default function ProductCard({ item }: { item: ClothesModel }) {
   return (

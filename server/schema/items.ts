@@ -14,10 +14,13 @@ export interface ClothingData {
   in_stock: number;
   price: number;
   pic_url?: string[];
+  dimensions: number[];
+  weight: number;
 }
 
 export interface CartProd {
   _id?: ObjectId;
+  item: ClothingData;
   amount: number;
   size: size;
 }

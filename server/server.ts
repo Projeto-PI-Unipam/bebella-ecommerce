@@ -1,4 +1,9 @@
-import express, { type Request, type Response, type Express } from "express";
+import express, {
+  type Request,
+  type Response,
+  type Express,
+  type NextFunction,
+} from "express";
 import { ObjectId } from "mongodb";
 import cors from "cors";
 import {
@@ -9,7 +14,6 @@ import {
   type TokenResponse,
   authUser,
 } from "./schema/users.ts";
-import bodyParser from "body-parser";
 
 import { type UserData } from "./schema/users.ts";
 import {
@@ -17,19 +21,25 @@ import {
   type size,
   addItem,
   changeItem,
+  type CartProd,
 } from "./schema/items.ts";
 import db from "./db/connection.ts";
+import {
+  fetch_sales,
+  register_sale,
+  type ShippingInfo,
+} from "./schema/sales.ts";
+import { assert } from "console";
 
 const items_db = db.collection("items");
 const users_db = db.collection("users");
 
 const PORT = process.env.PORT;
 const app: Express = express();
-const jsonParser = bodyParser.json();
-const encodedParser = bodyParser.urlencoded();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 /*app.use(function (err: any, _: any, res: any, next: any) {
   if (err.name === "UnauthorizedError") {
     res.status(401).send("Token de autenticação inválido");
@@ -130,7 +140,6 @@ app.get(
 
 app.post(
   "/admin/getproducts",
-  jsonParser,
   async (
     req: Request<{ auth_token: string; stockWarn?: number; category?: string }>,
     res: Response,
@@ -175,7 +184,6 @@ app.post(
 
 app.post(
   "/userapi/check",
-  encodedParser,
   async (req: Request<{ email: string }>, res: Response) => {
     const user_res = await userExists(req.body.email, true);
     if (user_res === false) {
@@ -188,7 +196,6 @@ app.post(
 
 app.post(
   "/userapi/parsetoken",
-  encodedParser,
   async (req: Request<{ token: string }>, res: Response) => {
     try {
       const user_fid: TokenResponse | undefined = authUser(
@@ -207,7 +214,6 @@ app.post(
 
 app.post(
   "/userapi/login",
-  encodedParser,
   async (req: Request<{ email: string; password: string }>, res: Response) => {
     try {
       if (req.body && req.body.email && req.body.password) {
@@ -232,11 +238,11 @@ app.post(
 
 app.post(
   "/userapi/register",
-  encodedParser,
   async (
     req: Request<{
       name: string;
       email: string;
+      phone: string;
       password: string;
       birth_date: Date;
     }>,
@@ -248,6 +254,7 @@ app.post(
         req.body.email,
         req.body.password,
         req.body.birth_date,
+        req.body.phone,
       );
       res.status(200).send(new_user!);
     } catch (err) {
@@ -258,8 +265,100 @@ app.post(
 );
 
 app.post(
+  "/userapi/getcart",
+  async (req: Request<{ token: string }>, res: Response) => {
+    try {
+      const authed_data = authUser(req.body.token);
+      if (!authed_data) {
+        res
+          .status(403)
+          .send(
+            new Error(
+              "Usuário não autenticado ou com sessão expirada. Por favor, faça login novamente.",
+            ),
+          );
+      }
+      const user = (await users_db.findOne({
+        _id: new ObjectId(authed_data!.id),
+      })) as UserData;
+      const prods = user.cart_products;
+      res.status(200).send(JSON.stringify(prods));
+    } catch (err) {
+      console.error(err);
+      res.status(500).send(err);
+    }
+  },
+);
+
+app.post(
+  "/userapi/checkout",
+  async (
+    req: Request<{
+      products: { prod_id: string; quantity: number; size: number | string }[];
+      user: string;
+      address: ShippingInfo;
+    }>,
+    res: Response,
+  ) => {
+    try {
+      const user_prof = authUser(req.body.user)!!;
+      console.log(req.body.products);
+      const items: Array<any> = [];
+      for (const p of req.body.products) {
+        console.log(p);
+        const item_detes = await items_db
+          .findOne<ClothingData>({ _id: new ObjectId(p.prod_id) })
+          .then((res) => {
+            console.log(res);
+            return {
+              _id: p.prod_id,
+              amount: p.quantity,
+              item: res,
+              size: p.size,
+            };
+          });
+        items.push(item_detes);
+      }
+      console.log(items);
+      const total = await items.reduce(
+        (acc, elem) => acc + elem.amount * elem.item.price,
+        0,
+      );
+      const buy_res = await register_sale({
+        amount: total,
+        products: items,
+        buyer_id: new ObjectId(user_prof.id),
+        address: req.body.address,
+      });
+      console.log(buy_res);
+      res.status(200).send(JSON.stringify(buy_res));
+    } catch (err) {
+      console.error(err);
+      res.status(500).send(err);
+    }
+  },
+);
+
+app.post(
+  "/userapi/getorders",
+  async (req: Request<{ token: string }>, res: Response) => {
+    try {
+      const user = authUser(req.body.token);
+      if (!user) {
+        throw new Error("Usuário não encontrado");
+      } else {
+        const sales = await fetch_sales(new ObjectId(user!!.id));
+        res.status(200).send(JSON.stringify(sales));
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send(err);
+    }
+  },
+);
+
+app.post(
   "/admin/products/new",
-  jsonParser,
   async function (
     req: Request<{
       name: string;
@@ -271,6 +370,8 @@ app.post(
       auth_token: string;
       description?: string;
       pic_url?: string[];
+      dimensions: number[];
+      weight: number;
     }>,
     res: Response,
   ) {
@@ -287,6 +388,8 @@ app.post(
           in_stock: req.body.in_stock,
           price: req.body.price,
           pic_url: req.body.pic_url,
+          dimensions: req.body.dimensions,
+          weight: req.body.weight,
         };
         await addItem(new_item);
         res.status(200).send(new_item);
@@ -303,7 +406,6 @@ app.post(
 
 app.patch(
   "/admin/products/update",
-  jsonParser,
   async function (
     req: Request<{
       id: string;
@@ -316,6 +418,8 @@ app.patch(
       auth_token: string;
       description?: string;
       pic_url?: string[];
+      dimensions: number[];
+      weight: number;
     }>,
     res: Response,
   ) {
@@ -332,6 +436,8 @@ app.patch(
           in_stock: req.body.in_stock,
           pic_url: req.body.pic_url,
           price: req.body.price,
+          dimensions: req.body.dimensions,
+          weight: req.body.weight,
         };
         await changeItem(updated_item);
         res.status(200).send(updated_item);
@@ -345,6 +451,10 @@ app.patch(
     }
   },
 );
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(404).send("Não encontrado.");
+});
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

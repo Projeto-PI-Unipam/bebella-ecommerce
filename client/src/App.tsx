@@ -9,6 +9,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import ItemHandler from "./handlers/ItemHandler";
 import LoginPage from "./pages/LoginPage";
 import Footer from "./components/Footer";
+import OrdersPage from "./pages/OrdersPage";
 
 export interface UserModel {
   id?: ObjectId;
@@ -36,7 +37,7 @@ function delToken() {
 function getToken() {
   const tokenString = sessionStorage.getItem("token");
   if (!tokenString) {
-    return null;
+    return false;
   }
   const userToken = JSON.parse(tokenString);
   return userToken;
@@ -44,7 +45,10 @@ function getToken() {
 
 export default function App() {
   const [userToken, setToken] = useState(getToken());
-  const [activeSession, activateSession] = useState<string | null>(userToken);
+  const [tokenValid, setValid] = useState<boolean | null>(null);
+  const [activeSession, activateSession] = useState<string | boolean | null>(
+    userToken,
+  );
 
   useEffect(() => {
     async function getUser() {
@@ -64,9 +68,12 @@ export default function App() {
           saveToken(userToken);
           if (userToken) {
             activateSession(userToken);
+            setValid(true);
           }
         } else {
           delToken();
+          setValid(false);
+          activateSession(false);
           await getUser();
           return;
         }
@@ -77,43 +84,44 @@ export default function App() {
   }, [location.href, location, sessionStorage.length, location.pathname]);
 
   return (
-    <div>
+    <div className="max-w-dvw overflow-x-clip">
       {!location.pathname.includes("login") && <Topbar host={activeSession} />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
-<<<<<<< HEAD
           {/*<Route path="/browse" element={<ClothesList />} />*/}
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/user/checkout"
-            element={<CheckoutPage host={activeSession} />}
-=======
-          <Route path="/browse" element={<ClothesList />} />
           <Route
             path="/login"
             element={<LoginPage setter={activateSession} />}
->>>>>>> ee2b058 (improving server schema and client routing)
           />
-          {activeSession && (
-            <Route
-              path="/checkout"
-              element={<CheckoutPage host={activeSession} />}
-            />
-          )}
-          {!activeSession && (
-            <Route
-              path="/checkout"
-              element={
-                <LoginPage redirect="/checkout" setter={activateSession} />
-              }
-            />
-          )}
-          <Route
-            path="/admin/items"
-            element={<ItemHandler host={activeSession} />}
-          />
+          {activeSession === false ||
+            (tokenValid === false && (
+              <Route
+                path="/cart"
+                element={
+                  <LoginPage redirect="/cart" setter={activateSession} />
+                }
+              />
+            ))}
+          {activeSession &&
+            typeof activeSession === "string" &&
+            tokenValid === true && (
+              <Route
+                path="/admin/items"
+                element={<ItemHandler host={activeSession} />}
+              />
+            ) && (
+              <Route
+                path="/cart"
+                element={<CheckoutPage host={activeSession} />}
+              />
+            ) && (
+              <Route
+                path="/orders"
+                element={<OrdersPage host={activeSession} />}
+              />
+            )}
         </Routes>
       </BrowserRouter>
       {!location.pathname.includes("login") && <Footer />}

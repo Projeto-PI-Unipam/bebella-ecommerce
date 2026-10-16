@@ -6,7 +6,7 @@ import { InstagramLogoIcon } from "@phosphor-icons/react/dist/csr/InstagramLogo"
 export default function Footer() {
   const ico_size = 44;
   return (
-    <div className="collapse lg:visible w-full h-56 bg-[#f6bebf] flex flex-row pt-3 pb-3 pl-12 pr-32 justify-between items-center font-[Prompt] text-lg text-neutral-800 font-light">
+    <div className="collapse lg:visible w-full h-56 bg-[#f6bebf] flex flex-row pt-3 pb-3 pl-12 pr-32 justify-between items-center font-[Prompt] text-lg text-neutral-800 font-light not-lg:max-h-0 not-lg:pb-0 not-lg:mb-0 max-w-dvw">
       <div className="w-1/4 min-w-90 flex flex-row h-full">
         <div className="w-1/4 max-w-15 flex flex-col h-full justify-evenly items-start pt-2 pb-2">
           <WhatsappLogoIcon

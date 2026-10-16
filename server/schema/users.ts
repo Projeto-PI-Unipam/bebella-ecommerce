@@ -13,6 +13,7 @@ export interface UserData {
   func_id?: number;
   name: string;
   email: string;
+  phone: string;
   hash: string;
   salt: string;
   birth_date: Date;
@@ -88,6 +89,7 @@ export async function addUser(
   user_email: string,
   password: string,
   birth: Date,
+  user_phone: string,
 ) {
   try {
     const test_exist = await db_coll
@@ -101,6 +103,7 @@ export async function addUser(
         func_id: 165,
         name: name,
         email: user_email,
+        phone: user_phone,
         birth_date: birth,
         hash: new_hashpass,
         salt: new_salt,
@@ -117,6 +120,7 @@ export async function addUser(
 }
 
 export interface TokenResponse {
+  id: ObjectId;
   email: string;
   name: string;
   func: number;

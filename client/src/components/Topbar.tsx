@@ -7,7 +7,7 @@ import Sidemenu from "./Sidemenu";
 import "../assets/fonts/fonts.css";
 import { useEffect, useState } from "react";
 
-function Topbar({ host }: { host: string | null }) {
+function Topbar({ host }: { host: string | boolean | null }) {
   const backgroundActive = "#f6bebf";
   const [searchText, setSearch] = useState("");
 
@@ -113,7 +113,7 @@ function Topbar({ host }: { host: string | null }) {
             weight="duotone"
             size={28}
             onClick={() => {
-              if (host) {
+              if (host && typeof host === "string") {
               } else {
                 location.assign(location.origin + "/login");
               }
@@ -132,7 +132,7 @@ function Topbar({ host }: { host: string | null }) {
             color="#98263e"
             weight="duotone"
             size={28}
-            onClick={() => location.assign(location.origin + "/checkout")}
+            onClick={() => location.assign(location.origin + "/cart")}
           />
         </div>
       </div>
