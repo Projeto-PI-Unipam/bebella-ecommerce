@@ -5,6 +5,7 @@ import db from "../db/connection.ts";
 import dotenv from "dotenv";
 import { type WebSale } from "./sales.ts";
 import { type CartProd } from "./items.ts";
+import { env } from "cloudflare:workers";
 
 dotenv.config();
 
@@ -80,7 +81,7 @@ export function genToken(user_data: UserData) {
       func: user_data.func_id || 165,
       exp: Math.round(expiry.getTime() / 1000),
     },
-    process.env.JWT_SEC!,
+    env.JWT_SEC!,
   );
 }
 
@@ -133,7 +134,7 @@ export function authUser(user_token: string) {
     try {
       const res: TokenResponse | undefined = jwt.verify(
         user_token,
-        process.env.JWT_SEC!,
+        env.JWT_SEC!,
       ) as TokenResponse;
       return res;
     } catch (err) {

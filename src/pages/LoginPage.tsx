@@ -4,6 +4,7 @@ import "./LoginPage.css";
 import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
 import { saveToken } from "../App";
+import { ENDPOINT } from "../App";
 
 export default function LoginPage({
   redirect,
@@ -25,8 +26,8 @@ export default function LoginPage({
   }
   const tryLogin = useEffectEvent(async () => {
     setPending(true);
-    const hashpass = await hash(pass, salt);
-    const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/login";
+    const hashpass = await hash(pass, salt || "");
+    const endpoint = ENDPOINT + "/userapi/login";
     const response = await fetch(endpoint, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -52,7 +53,7 @@ export default function LoginPage({
   });
   const checkUser = useEffectEvent(async () => {
     setPending(true);
-    const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/check";
+    const endpoint = ENDPOINT + "/userapi/check";
     const response = await fetch(endpoint, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

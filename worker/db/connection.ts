@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
+import { env } from "cloudflare:workers";
 
-const uri = process.env.DBPROD_URL || "";
+const uri = env.DBPROD_URL || "";
 const client = new MongoClient(uri);
 
 try {

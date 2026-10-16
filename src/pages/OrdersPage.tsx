@@ -1,22 +1,20 @@
 import { useEffect, useState } from "react";
+import { ENDPOINT } from "../App";
 import { type WebSale, type SaleReview } from "../database/Schema";
 
 export default function OrdersPage({ host }: { host: string }) {
   const [orders, setOrders] = useState<Array<WebSale> | null>(null);
   useEffect(() => {
     async function getOrders() {
-      const res = await fetch(
-        import.meta.env.VITE_ENDPOINT + "/userapi/getorders",
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({
-            token: host,
-          }),
+      const res = await fetch(ENDPOINT + "/userapi/getorders", {
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        method: "POST",
+        body: JSON.stringify({
+          token: host,
+        }),
+      });
       if (res.ok) {
         const prods = await res.json();
         setOrders(prods);
@@ -28,9 +26,9 @@ export default function OrdersPage({ host }: { host: string }) {
   }, [location.pathname, host]);
   return (
     <div className="h-[85dvh] w-full lg:pl-[8dvw] lg:pr-[8dvw] lg:pt-[4dvh] lg:pb-[4dvh]">
-      {orders?.map((order) => (
+      {orders?.map((order, index) => (
         <div
-          key={order.date.toISOString() || order._id.toHexString()}
+          key={order.date?.toISOString() || index}
           className="lg:w-[30dvw] h-40 bg-sky-100"
         ></div>
       ))}

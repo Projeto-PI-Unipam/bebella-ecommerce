@@ -14,6 +14,9 @@ import {
   type TokenResponse,
   authUser,
 } from "./schema/users.ts";
+import { httpServerHandler } from "cloudflare:node";
+import { env } from "cloudflare:workers";
+const PORT = 3000;
 
 import { type UserData } from "./schema/users.ts";
 import {
@@ -21,7 +24,6 @@ import {
   type size,
   addItem,
   changeItem,
-  type CartProd,
 } from "./schema/items.ts";
 import db from "./db/connection.ts";
 import {
@@ -29,12 +31,10 @@ import {
   register_sale,
   type ShippingInfo,
 } from "./schema/sales.ts";
-import { assert } from "console";
 
 const items_db = db.collection("items");
-const users_db = db.collection("users");
+//const users_db = db.collection("users");
 
-const PORT = process.env.PORT;
 const app: Express = express();
 
 app.use(cors());
@@ -72,9 +72,11 @@ app.get("/browse", async (_: Request, res: Response) => {
     let results = await items_db.find({}).toArray();
     let count = await items_db.estimatedDocumentCount();
     res.status(200).send([results, count]);
+    res.end();
   } catch (err) {
     console.error(err);
     res.status(503).send("Erro ao buscar itens");
+    res.end();
   }
 });
 
@@ -83,9 +85,11 @@ app.get("/items/all", async (_: Request, res: Response) => {
     let results = await items_db.find({}).toArray();
     let count = await items_db.estimatedDocumentCount();
     res.status(200).send(JSON.stringify([results, count]));
+    res.end();
   } catch (err) {
     console.error(err);
     res.status(503).send("Erro ao buscar itens");
+    res.end();
   }
 });
 
@@ -98,9 +102,11 @@ app.get(
       const results = await items_db.find(query).toArray();
       const count = await items_db.countDocuments(query);
       res.status(200).send(JSON.stringify([results, count]));
+      res.end();
     } catch (err) {
       console.error(err);
       res.status(503).send("Erro ao filtrar categorias");
+      res.end();
     }
   },
 );
@@ -112,9 +118,11 @@ app.get("/items/search/:searchTerm", async (req: Request, res: Response) => {
     const results = await items_db.find(query).toArray();
     const count = await items_db.countDocuments(query);
     res.status(200).send(JSON.stringify([results, count]));
+    res.end();
   } catch (err) {
     console.error(err);
     res.status(503).send("Erro ao pesquisar itens");
+    res.end();
   }
 });
 
@@ -129,11 +137,14 @@ app.get(
       }).toArray;
       if (!query || query.length === 0) {
         res.status(404).send("Produto não encontrado");
+        res.end();
       } else {
         res.status(200).send(JSON.stringify(query));
+        res.end();
       }
     } catch (err) {
       console.error(err);
+      res.end();
     }
   },
 );
@@ -146,7 +157,7 @@ app.post(
   ) => {
     try {
       const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(process.env.ADMIN_FID!)) {
+      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
         if (req.body.category && req.body.category.length >= 1) {
         } else {
           const full_data = await items_db.find<ClothingData>({}).toArray();
@@ -169,11 +180,11 @@ app.post(
             productsCount: await items_db.estimatedDocumentCount(),
           };
           res.status(200).send(datapoints);
-          return;
+          res.end();
         }
       } else {
         res.status(401).send("Usuário não autorizado");
-        return;
+        res.end();
       }
     } catch (err) {
       console.error(err);
@@ -188,9 +199,10 @@ app.post(
     const user_res = await userExists(req.body.email, true);
     if (user_res === false) {
       res.status(206).send(false);
-    } else {
-      res.status(200).send(JSON.stringify((user_res as UserData).salt));
+      res.end();
     }
+    res.status(200).send(JSON.stringify((user_res as UserData).salt));
+    res.end();
   },
 );
 
@@ -203,11 +215,14 @@ app.post(
       );
       if (user_fid) {
         res.status(204).send();
+        res.end();
       } else {
         res.status(406).send();
+        res.end();
       }
     } catch (err) {
       res.status(406).send(err);
+      res.end();
     }
   },
 );
@@ -220,17 +235,21 @@ app.post(
         const result = await loginUser(req.body.email, req.body.password);
         if (!result || !result._id) {
           res.status(406).send();
+          res.end();
         } else {
           const new_token = genToken(result);
           res.status(200).send(JSON.stringify(new_token));
+          res.end();
         }
       }
     } catch (err: any) {
       if (err.message.includes("Senha") || err.message.includes("encontrado")) {
         res.status(406).send(JSON.stringify(err));
+        res.end();
       } else {
         console.error(err);
         res.status(503).send(JSON.stringify(err));
+        res.end();
       }
     }
   },
@@ -257,14 +276,16 @@ app.post(
         req.body.phone,
       );
       res.status(200).send(new_user!);
+      res.end();
     } catch (err) {
       console.error(err);
       res.status(503).send(err);
+      res.end();
     }
   },
 );
 
-app.post(
+/* app.post(
   "/userapi/getcart",
   async (req: Request<{ token: string }>, res: Response) => {
     try {
@@ -277,18 +298,21 @@ app.post(
               "Usuário não autenticado ou com sessão expirada. Por favor, faça login novamente.",
             ),
           );
+        res.end();
       }
       const user = (await users_db.findOne({
         _id: new ObjectId(authed_data!.id),
       })) as UserData;
       const prods = user.cart_products;
       res.status(200).send(JSON.stringify(prods));
+      res.end();
     } catch (err) {
       console.error(err);
       res.status(500).send(err);
+      res.end();
     }
   },
-);
+); */
 
 app.post(
   "/userapi/checkout",
@@ -332,9 +356,11 @@ app.post(
       });
       console.log(buy_res);
       res.status(200).send(JSON.stringify(buy_res));
+      res.end();
     } catch (err) {
       console.error(err);
       res.status(500).send(err);
+      res.end();
     }
   },
 );
@@ -350,9 +376,11 @@ app.post(
         const sales = await fetch_sales(new ObjectId(user!!.id));
         res.status(200).send(JSON.stringify(sales));
       }
+      res.end();
     } catch (err) {
       console.error(err);
       res.status(500).send(err);
+      res.end();
     }
   },
 );
@@ -377,7 +405,7 @@ app.post(
   ) {
     try {
       const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(process.env.ADMIN_FID!)) {
+      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
         const new_item: ClothingData = {
           _id: new ObjectId(),
           name: req.body.name,
@@ -393,13 +421,15 @@ app.post(
         };
         await addItem(new_item);
         res.status(200).send(new_item);
+        res.end();
       } else {
         res.status(401).send("Usuário não autorizado");
-        return;
+        res.end();
       }
     } catch (err) {
       console.error(err);
       res.status(503).send(err);
+      res.end();
     }
   },
 );
@@ -425,7 +455,7 @@ app.patch(
   ) {
     try {
       const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(process.env.ADMIN_FID!)) {
+      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
         const updated_item: ClothingData = {
           _id: new ObjectId(req.body.id),
           name: req.body.name,
@@ -441,21 +471,25 @@ app.patch(
         };
         await changeItem(updated_item);
         res.status(200).send(updated_item);
+        res.end();
       } else {
         res.status(401).send("Usuário não autorizado");
-        return;
+        res.end();
       }
     } catch (err) {
       console.error(err);
       res.status(503).send(err);
+      res.end();
     }
   },
 );
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((_req: Request, res: Response, _next: NextFunction) => {
   res.status(404).send("Não encontrado.");
 });
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+export default httpServerHandler({ port: PORT });

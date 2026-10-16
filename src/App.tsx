@@ -11,6 +11,8 @@ import LoginPage from "./pages/LoginPage";
 import Footer from "./components/Footer";
 import OrdersPage from "./pages/OrdersPage";
 
+export const ENDPOINT = "http://localhost:8787";
+
 export interface UserModel {
   id?: ObjectId;
   func_id?: number;
@@ -31,7 +33,8 @@ export function saveToken(token: string) {
 }
 
 function delToken() {
-  sessionStorage.setItem("token", null);
+  sessionStorage.setItem("token", "");
+  sessionStorage.removeItem("token");
 }
 
 function getToken() {
@@ -50,10 +53,13 @@ export default function App() {
     userToken,
   );
 
+  const check =
+    activeSession && typeof activeSession === "string" && tokenValid === true;
+
   useEffect(() => {
     async function getUser() {
       if (userToken && userToken.length >= 1) {
-        const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/parsetoken";
+        const endpoint = ENDPOINT + "/userapi/parsetoken";
         const check = await fetch(endpoint, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -104,24 +110,27 @@ export default function App() {
                 }
               />
             ))}
-          {activeSession &&
-            typeof activeSession === "string" &&
-            tokenValid === true && (
-              <Route
-                path="/admin/items"
-                element={<ItemHandler host={activeSession} />}
-              />
-            ) && (
-              <Route
-                path="/cart"
-                element={<CheckoutPage host={activeSession} />}
-              />
-            ) && (
-              <Route
-                path="/orders"
-                element={<OrdersPage host={activeSession} />}
-              />
-            )}
+
+          {check && (
+            <Route
+              path="/admin/items"
+              element={<ItemHandler host={activeSession} />}
+            />
+          )}
+
+          {check && (
+            <Route
+              path="/cart"
+              element={<CheckoutPage host={activeSession} />}
+            />
+          )}
+
+          {check && (
+            <Route
+              path="/orders"
+              element={<OrdersPage host={activeSession} />}
+            />
+          )}
         </Routes>
       </BrowserRouter>
       {!location.pathname.includes("login") && <Footer />}

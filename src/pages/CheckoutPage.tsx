@@ -4,6 +4,7 @@ import SavedCard, { savedCardHeight } from "../components/SavedCard";
 import type { CartItem, ShippingAddress } from "../database/Schema";
 import { fmt_price } from "../database/Utils";
 import { clsx } from "clsx/lite";
+import { ENDPOINT } from "../App";
 
 const test_addy: ShippingAddress = {
   city: "Patos de Minas",
@@ -21,7 +22,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
   const [itemAmount, countItems] = useState(10); //useState(0);
   const [cartProds, setProds] = useState<Array<CartItem>>([]);
   const [cep, cepSet] = useState<number | null>(null);
-  const [chosenShipping, setShipping] = useState(null);
+  const [chosenShipping, setShipping] = useState<any>(null);
   const [availableShippings, setAvailableShips] = useState([10, 20, 30, 40]); //useState([]);
   const [hiddenTopics, toggleHide] = useState<Array<number>>([]);
   const [totalPrice, setTotal] = useState<number | null>(null);
@@ -53,20 +54,17 @@ export default function CheckoutPage({ host }: { host: string | null }) {
     const items_mapped = cartProds.map((c) => {
       return { prod_id: c._id!, quantity: c.amount, size: c.size };
     });
-    const bres = await fetch(
-      import.meta.env.VITE_ENDPOINT + "/userapi/checkout",
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          products: items_mapped,
-          user: host,
-          address: shipAddress,
-        }),
+    const bres = await fetch(/* ENDPOINT +  */ "/userapi/checkout", {
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      method: "POST",
+      body: JSON.stringify({
+        products: items_mapped,
+        user: host,
+        address: shipAddress,
+      }),
+    });
     console.log(bres);
     if (bres.ok) {
       console.log(await bres.json());
@@ -76,14 +74,14 @@ export default function CheckoutPage({ host }: { host: string | null }) {
 
   useEffect(() => {
     async function getCartItems() {
-      const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/getcart";
+      const endpoint = ENDPOINT + "/userapi/getcart";
       const res = await fetch(endpoint, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         method: "POST",
         body: new URLSearchParams({
-          token: host,
+          token: host || "",
         }),
       });
       if (res.ok) {
@@ -149,7 +147,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
             </span>
             {chosenShipping && hiddenTopics.includes(1) && (
               <span className="pb-1 text-md lg:collapse">
-                {`${chosenShipping.provider.toUpperCase() || ""}`}
+                {`${chosenShipping /*.provider.toUpperCase() || ""*/}`}
               </span>
             )}
           </div>

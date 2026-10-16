@@ -2,6 +2,7 @@ import { ObjectId, UUID } from "mongodb";
 import { type CartProd } from "./items.ts";
 import db from "../db/connection.ts";
 import { type UserData } from "./users.ts";
+import { env } from "cloudflare:workers";
 
 const db_coll = db.collection("sales");
 const user_coll = db.collection("users");
@@ -59,7 +60,7 @@ export async function register_sale(sale: WebSale) {
         accept: "application/json",
         "Content-Type": "application/json",
         "X-Idempotency-Key": new UUID().toJSON(),
-        Authorization: `Bearer ${process.env.MP_ACCESS || ""}`,
+        Authorization: `Bearer ${env.MP_ACCESS || ""}`,
       },
       method: "POST",
       body: JSON.stringify({
@@ -71,9 +72,9 @@ export async function register_sale(sale: WebSale) {
         config: {
           online: {
             auto_return: "approved",
-            success_url: process.env.FRONT_END + "/orders" || "",
-            failure_url: process.env.FRONT_END + "/orders" || "",
-            pending_url: process.env.FRONT_END + "/orders" || "",
+            success_url: env.FRONT_END + "/orders" || "",
+            failure_url: env.FRONT_END + "/orders" || "",
+            pending_url: env.FRONT_END + "/orders" || "",
           },
         },
         payer: {
@@ -92,7 +93,7 @@ export async function register_sale(sale: WebSale) {
       }),
     });
     if (out_res.ok) {
-      const response = await out_res.json();
+      const response: any = await out_res.json();
       await db_coll.insertOne({
         ...sale,
         payment_db_id: response.id,

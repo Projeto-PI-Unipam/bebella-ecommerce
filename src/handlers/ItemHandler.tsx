@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { type ClothesModel } from "../database/Schema";
 import { useLocation } from "react-router-dom";
+import { ENDPOINT } from "../App";
 
 interface DataPoints {
   /*totalSold: number;
@@ -37,7 +38,7 @@ export default function ItemHandler({ host }: { host: string }) {
   useEffect(() => {
     async function fetchData() {
       if (host) {
-        const endpoint = import.meta.env.VITE_ENDPOINT + `/admin/getproducts`;
+        const endpoint = ENDPOINT + `/admin/getproducts`;
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
