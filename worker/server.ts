@@ -26,7 +26,7 @@ const items_db = db.collection("items");
 const users_db = db.collection("users");
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
 
@@ -115,7 +115,7 @@ export default {
       try {
         const body = await req.json<any>();
         const user_fid: TokenResponse | undefined = authUser(body.auth_token);
-        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+        if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           if (path === body.category && body.category.length >= 1) {
           } else {
             const full_data = await items_db.find<ClothingData>({}).toArray();
@@ -355,7 +355,7 @@ export default {
           weight: number;
         }>();
         const user_fid: TokenResponse | undefined = authUser(body.auth_token);
-        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+        if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           const new_item: ClothingData = {
             _id: new ObjectId(),
             name: body.name,
@@ -399,7 +399,7 @@ export default {
           weight: number;
         }>();
         const user_fid: TokenResponse | undefined = authUser(body.auth_token);
-        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+        if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           const updated_item: ClothingData = {
             _id: new ObjectId(body.id),
             name: body.name,
