@@ -4,7 +4,6 @@ import SavedCard, { savedCardHeight } from "../components/SavedCard";
 import type { CartItem, ShippingAddress } from "../database/Schema";
 import { fmt_price } from "../database/Utils";
 import { clsx } from "clsx/lite";
-import { ENDPOINT } from "../App";
 
 const test_addy: ShippingAddress = {
   city: "Patos de Minas",
@@ -19,8 +18,8 @@ const test_addy: ShippingAddress = {
 };
 
 export default function CheckoutPage({ host }: { host: string | null }) {
-  const [itemAmount, countItems] = useState(10); //useState(0);
-  const [cartProds, setProds] = useState<Array<CartItem>>([]);
+  const [itemAmount, countItems] = useState(0);
+  const [cartProds, setProds] = useState<Array<CartItem> | null>(null);
   const [cep, cepSet] = useState<number | null>(null);
   const [chosenShipping, setShipping] = useState<any>(null);
   const [availableShippings, setAvailableShips] = useState([10, 20, 30, 40]); //useState([]);
@@ -51,30 +50,54 @@ export default function CheckoutPage({ host }: { host: string | null }) {
   }
 
   const doCheckout = useEffectEvent(async () => {
-    const items_mapped = cartProds.map((c) => {
+    if (cartProds === null) {
+      return;
+    }
+    const items_mapped = cartProds!.map((c) => {
       return { prod_id: c._id!, quantity: c.amount, size: c.size };
     });
-    const bres = await fetch(/* ENDPOINT +  */ "/userapi/checkout", {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      body: JSON.stringify({
-        products: items_mapped,
-        user: host,
-        address: shipAddress,
-      }),
-    });
-    console.log(bres);
-    if (bres.ok) {
-      console.log(await bres.json());
-      console.log("neat!");
+    const checkout_fetch = async () =>
+      await fetch("/userapi/checkout", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          products: items_mapped,
+          user: host,
+          address: shipAddress,
+        }),
+      });
+    let initial_res = await checkout_fetch();
+    let fmt_res: any = undefined;
+    const checkout_test = async () => {
+      if (initial_res.ok) {
+        const jres = await initial_res.json();
+        fmt_res = jres;
+      } else {
+        if ((await initial_res.text()).includes("generate a response")) {
+          initial_res = await checkout_fetch();
+          await checkout_test();
+        } else {
+          console.error(initial_res);
+          return;
+        }
+      }
+    };
+    await checkout_test();
+    console.log(fmt_res);
+    if (fmt_res) {
+      location.replace(fmt_res.checkout_url);
     }
+    return;
   });
 
   useEffect(() => {
     async function getCartItems() {
-      const endpoint = ENDPOINT + "/userapi/getcart";
+      if (!host) {
+        return;
+      }
+      const endpoint = "/userapi/getcart";
       const res = await fetch(endpoint, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -99,7 +122,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
     }
     getCartItems();
     return;
-  }, [location.pathname, location.href]);
+  }, [location.pathname, location.href, host]);
 
   return (
     <div className="w-full not-lg:min-h-dvh lg:h-dvh bg-neutral-1000 font-[Prompt] text-md text-neutral-800 lg:pt-8 lg:pb-8 flex lg:flex-row not-lg:flex-col not-lg:pb-0 not-lg:mb-0 not-lg:pt-4 not-lg:items-center lg:justify-between overflow-x-hidden max-w-dvw">
@@ -116,9 +139,11 @@ export default function CheckoutPage({ host }: { host: string | null }) {
           <span className="-mb-1 pb-0 leading-none">
             {"Sacola de Compras".toUpperCase()}
           </span>
-          <span className="font-light text-neutral-600 mt-0 pt-0 leading-none">
-            {`${itemAmount} ${itemAmount === 1 ? "Item" : "Itens"}`.toUpperCase()}
-          </span>
+          {cartProds !== null && (
+            <span className="font-light text-neutral-600 mt-0 pt-0 leading-none">
+              {`${itemAmount} ${itemAmount === 1 ? "Item" : "Itens"}`.toUpperCase()}
+            </span>
+          )}
         </div>
         <div
           className="flex flex-col w-full h-[32dvh] lg:h-[85dvh] lg:max-h-[85dvh] overflow-y-scroll overflow-x-hidden lg:overscroll-contain not-lg:overscroll-auto bg-sky-400 scrollbar-thumb-neutral-50 scrollbar-track-neutral-400 focus:scrollbar-thumb-neutral-600 active:scrollbar-thumb-rose-400 lg:min-h-[85dvh]"
@@ -128,11 +153,13 @@ export default function CheckoutPage({ host }: { host: string | null }) {
           }}
         >
           <ul>
-            {Array.from({ length: itemAmount }).map((_, i) => (
-              <li>
-                <SavedCard key={i + 1} ind={i + 1} />
-              </li>
-            ))}
+            {cartProds !== null &&
+              cartProds.length > 0 &&
+              cartProds.map((_, i) => (
+                <li>
+                  <SavedCard key={i + 1} ind={i + 1} />
+                </li>
+              ))}
           </ul>
         </div>
       </div>

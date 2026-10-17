@@ -5,7 +5,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "cloudbella",
-	"main": "worker/index.ts",
+	"main": "worker/server.ts",
 	"compatibility_date": "2026-10-06",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -14,7 +14,7 @@
 		"not_found_handling": "single-page-application",
 		"directory": "./src/assets",
 		"binding": "ASSETS",
-		"run_worker_first": ["/userapi/*", "/search*", "/category*", "/orders*"]
+		"run_worker_first": ["/userapi/*", "/admin/*"]
 	},
 	"observability": {
 		"enabled": true

@@ -50,7 +50,7 @@ function Topbar({ host }: { host: string | boolean | null }) {
           />
         </div>
 
-        <div className="flex flex-row gap-x-12 lg:visible collapse cursor-pointer">
+        <div className="flex flex-row gap-x-12 cursor-pointer 2xl:visible collapse">
           {[
             ["PRIMAVERA!", 0],
             ["NOVIDADES", 1],
@@ -60,7 +60,7 @@ function Topbar({ host }: { host: string | boolean | null }) {
           ].map((li) => (
             <a
               key={li[1]}
-              className="transition delay-8 duration-140 hover:scale-110 hover:translate-y-[-2.5px]"
+              className="transition delay-8 duration-140 hover:scale-110 hover:translate-y-[-2.5px] 2xl:visible collapse"
               href={
                 location.origin +
                 (li[1] === 0
@@ -73,7 +73,7 @@ function Topbar({ host }: { host: string | boolean | null }) {
               <span
                 onClick={() => console.log}
                 key={li[1]}
-                className={`lg:visible invisible ${li[1] === 0 ? "text-rose-700" : "text-neutral-800"} font-[Prompt]`}
+                className={`${li[1] === 0 ? "text-rose-700" : "text-neutral-800"} font-[Prompt] 2xl:visible collapse`}
               >
                 {li[0]}
               </span>

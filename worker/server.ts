@@ -1,11 +1,4 @@
-import express, {
-  type Request,
-  type Response,
-  type Express,
-  type NextFunction,
-} from "express";
 import { ObjectId } from "mongodb";
-import cors from "cors";
 import {
   loginUser,
   genToken,
@@ -14,9 +7,6 @@ import {
   type TokenResponse,
   authUser,
 } from "./schema/users.ts";
-import { httpServerHandler } from "cloudflare:node";
-import { env } from "cloudflare:workers";
-const PORT = 3000;
 
 import { type UserData } from "./schema/users.ts";
 import {
@@ -33,463 +23,425 @@ import {
 } from "./schema/sales.ts";
 
 const items_db = db.collection("items");
-//const users_db = db.collection("users");
+const users_db = db.collection("users");
 
-const app: Express = express();
+export default {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url = new URL(req.url);
+    const path = url.pathname;
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-/*app.use(function (err: any, _: any, res: any, next: any) {
-  if (err.name === "UnauthorizedError") {
-    res.status(401).send("Token de autenticação inválido");
-  } else {
-    next(err);
-  }
-});*/
-
-//passport.use(LocalStrategy);
-
-app.get("/", async (_: Request, res: Response) => res.send("ok"));
-
-/* app.get("/browse", async (_: Request, res: Response) => {
-  try {
-    let collection = db.collection("restaurants");
-    let query = {
-      borough: "Queens",
-      name: { $regex: "Moon", $options: "i" },
-    };
-    let results = await collection.find(query).toArray();
-    res.send(results).status(200);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error finding restaurants to browse");
-  }
-}); */
-
-app.get("/browse", async (_: Request, res: Response) => {
-  try {
-    let results = await items_db.find({}).toArray();
-    let count = await items_db.estimatedDocumentCount();
-    res.status(200).send([results, count]);
-    res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(503).send("Erro ao buscar itens");
-    res.end();
-  }
-});
-
-app.get("/items/all", async (_: Request, res: Response) => {
-  try {
-    let results = await items_db.find({}).toArray();
-    let count = await items_db.estimatedDocumentCount();
-    res.status(200).send(JSON.stringify([results, count]));
-    res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(503).send("Erro ao buscar itens");
-    res.end();
-  }
-});
-
-app.get(
-  "/items/category/:categoryTerm",
-  async (req: Request, res: Response) => {
-    try {
-      const search_reg = new RegExp(`.*${req.params.categoryTerm}.*`, `gi`);
-      const query = { category: search_reg };
-      const results = await items_db.find(query).toArray();
-      const count = await items_db.countDocuments(query);
-      res.status(200).send(JSON.stringify([results, count]));
-      res.end();
-    } catch (err) {
-      console.error(err);
-      res.status(503).send("Erro ao filtrar categorias");
-      res.end();
+    if (path === "/" && req.method === "GET") {
+      return new Response(JSON.stringify("ok!"));
     }
-  },
-);
 
-app.get("/items/search/:searchTerm", async (req: Request, res: Response) => {
-  try {
-    const search_reg = new RegExp(`.*${req.params.searchTerm}.*`, "gi");
-    const query = { $or: [{ name: search_reg }, { brand: search_reg }] };
-    const results = await items_db.find(query).toArray();
-    const count = await items_db.countDocuments(query);
-    res.status(200).send(JSON.stringify([results, count]));
-    res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(503).send("Erro ao pesquisar itens");
-    res.end();
-  }
-});
-
-app.get(
-  "/view/product/:productId",
-  async (req: Request<{ productId: string }>, res: Response) => {
-    try {
-      const collection = db.collection("items");
-      const prod_id = req.params.productId;
-      const query = collection.find({
-        _id: { $eq: new ObjectId(prod_id) },
-      }).toArray;
-      if (!query || query.length === 0) {
-        res.status(404).send("Produto não encontrado");
-        res.end();
-      } else {
-        res.status(200).send(JSON.stringify(query));
-        res.end();
+    if (path === "/browse" && req.method === "GET") {
+      try {
+        let results = await items_db.find({}).toArray();
+        let count = await items_db.estimatedDocumentCount();
+        return new Response(JSON.stringify([results, count]), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify("Erro ao buscar itens"), {
+          status: 503,
+        });
       }
-    } catch (err) {
-      console.error(err);
-      res.end();
     }
-  },
-);
 
-app.post(
-  "/admin/getproducts",
-  async (
-    req: Request<{ auth_token: string; stockWarn?: number; category?: string }>,
-    res: Response,
-  ) => {
-    try {
-      const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
-        if (req.body.category && req.body.category.length >= 1) {
+    if (path === "/items/all" && req.method === "GET") {
+      try {
+        let results = await items_db.find({}).toArray();
+        let count = await items_db.estimatedDocumentCount();
+        return new Response(JSON.stringify([results, count]), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify("Erro ao buscar itens"), {
+          status: 503,
+        });
+      }
+    }
+
+    if (path.startsWith("/items/category/") && req.method === "GET") {
+      try {
+        const search = path.replace("/items/category/", "");
+        const search_reg = new RegExp(`.*${search}.*`, `gi`);
+        const query = { category: search_reg };
+        const results = await items_db.find(query).toArray();
+        const count = await items_db.countDocuments(query);
+        return new Response(JSON.stringify([results, count]), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify("Erro ao buscar itens"), {
+          status: 503,
+        });
+      }
+    }
+
+    if (path.startsWith("/items/search/") && req.method === "GET") {
+      try {
+        const search = path.replace("/items/search/", "");
+        const search_reg = new RegExp(`.*${search}.*`, "gi");
+        const query = { $or: [{ name: search_reg }, { brand: search_reg }] };
+        const results = await items_db.find(query).toArray();
+        const count = await items_db.countDocuments(query);
+        return new Response(JSON.stringify([results, count]), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify("Erro ao buscar itens"), {
+          status: 503,
+        });
+      }
+    }
+
+    if (path.startsWith("/view/product/") && req.method === "GET") {
+      try {
+        const collection = db.collection("items");
+        const prod_id = path.replace("/view/product/", "");
+        const query = await collection.findOne({
+          _id: { $eq: new ObjectId(prod_id) },
+        });
+        if (!query) {
+          return new Response(JSON.stringify("Produto não encontrado"), {
+            status: 404,
+          });
         } else {
-          const full_data = await items_db.find<ClothingData>({}).toArray();
-          const datapoints = {
-            //totalSold: //todo: this must look in the sales database
-            // totalOutValue: //todo: see whether it's necessary to add buy_price parameter to clothes
-            /*totalInValue: full_data
+          return new Response(JSON.stringify(query), { status: 200 });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (path === "/admin/getproducts" && req.method === "POST") {
+      try {
+        const body = await req.json<any>();
+        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+          if (path === body.category && body.category.length >= 1) {
+          } else {
+            const full_data = await items_db.find<ClothingData>({}).toArray();
+            const datapoints = {
+              //totalSold: //todo: this must look in the sales database
+              // totalOutValue: //todo: see whether it's necessary to add buy_price parameter to clothes
+              /*totalInValue: full_data
               .map((d) => d.price)
               .reduce((acc, n) => acc + n) * //todo: sales_db,*/
-            //mostSold: //todo: sales_db
-            //mostSoldInCat:
-            //mostProfitable:
-            lowStockProducts: full_data.filter(
-              (d) => d.in_stock <= 10, //req.body.stockWarn,
-            ),
-            total: full_data, //todo: remove this
-            //monthlySoldPoints:
-            //monthlyOutPoints:
-            //monthlyInPoints:
-            productsCount: await items_db.estimatedDocumentCount(),
-          };
-          res.status(200).send(datapoints);
-          res.end();
-        }
-      } else {
-        res.status(401).send("Usuário não autorizado");
-        res.end();
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(503).send(err);
-    }
-  },
-);
-
-app.post(
-  "/userapi/check",
-  async (req: Request<{ email: string }>, res: Response) => {
-    const user_res = await userExists(req.body.email, true);
-    if (user_res === false) {
-      res.status(206).send(false);
-      res.end();
-    }
-    res.status(200).send(JSON.stringify((user_res as UserData).salt));
-    res.end();
-  },
-);
-
-app.post(
-  "/userapi/parsetoken",
-  async (req: Request<{ token: string }>, res: Response) => {
-    try {
-      const user_fid: TokenResponse | undefined = authUser(
-        req.body.token.replaceAll(/['"]/g, ""),
-      );
-      if (user_fid) {
-        res.status(204).send();
-        res.end();
-      } else {
-        res.status(406).send();
-        res.end();
-      }
-    } catch (err) {
-      res.status(406).send(err);
-      res.end();
-    }
-  },
-);
-
-app.post(
-  "/userapi/login",
-  async (req: Request<{ email: string; password: string }>, res: Response) => {
-    try {
-      if (req.body && req.body.email && req.body.password) {
-        const result = await loginUser(req.body.email, req.body.password);
-        if (!result || !result._id) {
-          res.status(406).send();
-          res.end();
+              //mostSold: //todo: sales_db
+              //mostSoldInCat:
+              //mostProfitable:
+              lowStockProducts: full_data.filter(
+                (d) => d.in_stock <= 10, //req.body.stockWarn,
+              ),
+              total: full_data, //todo: remove this
+              //monthlySoldPoints:
+              //monthlyOutPoints:
+              //monthlyInPoints:
+              productsCount: await items_db.estimatedDocumentCount(),
+            };
+            return new Response(JSON.stringify(datapoints), { status: 200 });
+          }
         } else {
-          const new_token = genToken(result);
-          res.status(200).send(JSON.stringify(new_token));
-          res.end();
+          return new Response(JSON.stringify("Usuário não autorizado"), {
+            status: 401,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
+      }
+    }
+
+    if (path === "/userapi/check" && req.method === "POST") {
+      const user_email = (await req.formData()).values().next().value;
+      if (!user_email) return new Response(null);
+      const user_res = await userExists(user_email, true);
+      if (user_res === false) {
+        return new Response(JSON.stringify(false), { status: 206 });
+      } else {
+        return new Response(JSON.stringify((user_res as UserData).salt), {
+          status: 200,
+        });
+      }
+    }
+
+    if (path === "/userapi/parsetoken" && req.method === "POST") {
+      try {
+        const token = (await req.formData()).values().next().value;
+        const user_fid: TokenResponse | undefined = authUser(
+          token.replaceAll(/['"]/g, ""),
+        );
+        if (user_fid) {
+          return new Response(null, { status: 204 });
+        } else {
+          return new Response(null, { status: 406 });
+        }
+      } catch (err) {
+        return new Response(null, { status: 406 });
+      }
+    }
+
+    if (path === "/userapi/login" && req.method === "POST") {
+      try {
+        const data = (await req.formData()).values();
+        const body = {
+          email: data.next().value,
+          password: data.next().value,
+        };
+        if (body.email && body.password) {
+          const result = await loginUser(body.email, body.password);
+          if (!result || !result._id) {
+            return new Response(null, { status: 406 });
+          } else {
+            const new_token = genToken(result);
+            return new Response(JSON.stringify(new_token), { status: 200 });
+          }
+        } else {
+          return new Response(null, { status: 406 });
+        }
+      } catch (err: any) {
+        if (
+          path === err.message.includes("Senha") ||
+          err.message.includes("encontrado")
+        ) {
+          return new Response(JSON.stringify(err), { status: 406 });
+        } else {
+          console.error(err);
+          return new Response(JSON.stringify(err), { status: 406 });
         }
       }
-    } catch (err: any) {
-      if (err.message.includes("Senha") || err.message.includes("encontrado")) {
-        res.status(406).send(JSON.stringify(err));
-        res.end();
-      } else {
+    }
+
+    if (path === "/userapi/register" && req.method === "POST") {
+      const data = (await req.formData()).values();
+      const body = {
+        name: data.next().value,
+        email: data.next().value,
+        password: data.next().value,
+        birth_date: data.next().value,
+        phone: data.next().value,
+      };
+      try {
+        const new_user = await addUser(
+          body.name,
+          body.email,
+          body.password,
+          body.birth_date,
+          body.phone,
+        );
+        return new Response(JSON.stringify(new_user!), { status: 200 });
+      } catch (err) {
         console.error(err);
-        res.status(503).send(JSON.stringify(err));
-        res.end();
+        return new Response(JSON.stringify(err), { status: 503 });
       }
     }
-  },
-);
 
-app.post(
-  "/userapi/register",
-  async (
-    req: Request<{
-      name: string;
-      email: string;
-      phone: string;
-      password: string;
-      birth_date: Date;
-    }>,
-    res: Response,
-  ) => {
-    try {
-      const new_user = await addUser(
-        req.body.name,
-        req.body.email,
-        req.body.password,
-        req.body.birth_date,
-        req.body.phone,
-      );
-      res.status(200).send(new_user!);
-      res.end();
-    } catch (err) {
-      console.error(err);
-      res.status(503).send(err);
-      res.end();
-    }
-  },
-);
-
-/* app.post(
-  "/userapi/getcart",
-  async (req: Request<{ token: string }>, res: Response) => {
-    try {
-      const authed_data = authUser(req.body.token);
-      if (!authed_data) {
-        res
-          .status(403)
-          .send(
-            new Error(
+    if (path === "/userapi/getcart" && req.method === "POST") {
+      try {
+        const data = await req.formData();
+        if (!data) {
+          return new Response(null);
+        }
+        const token = data.values()?.next()?.value || null;
+        if (!token) {
+          return new Response(null);
+        }
+        const authed_data = authUser(token);
+        if (!authed_data) {
+          return new Response(
+            JSON.stringify(
               "Usuário não autenticado ou com sessão expirada. Por favor, faça login novamente.",
             ),
+            { status: 403 },
           );
-        res.end();
+        }
+        const user_db = await users_db.findOne({
+          _id: new ObjectId(authed_data!.id),
+        });
+        if (!user_db) {
+          return new Response(null, { status: 406 });
+        }
+        const prods = user_db.cart_products;
+        return new Response(JSON.stringify(prods), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
       }
-      const user = (await users_db.findOne({
-        _id: new ObjectId(authed_data!.id),
-      })) as UserData;
-      const prods = user.cart_products;
-      res.status(200).send(JSON.stringify(prods));
-      res.end();
-    } catch (err) {
-      console.error(err);
-      res.status(500).send(err);
-      res.end();
     }
-  },
-); */
 
-app.post(
-  "/userapi/checkout",
-  async (
-    req: Request<{
-      products: { prod_id: string; quantity: number; size: number | string }[];
-      user: string;
-      address: ShippingInfo;
-    }>,
-    res: Response,
-  ) => {
-    try {
-      const user_prof = authUser(req.body.user)!!;
-      console.log(req.body.products);
-      const items: Array<any> = [];
-      for (const p of req.body.products) {
-        console.log(p);
-        const item_detes = await items_db
-          .findOne<ClothingData>({ _id: new ObjectId(p.prod_id) })
-          .then((res) => {
-            console.log(res);
-            return {
-              _id: p.prod_id,
-              amount: p.quantity,
-              item: res,
-              size: p.size,
-            };
+    if (path === "/userapi/checkout" && req.method === "POST") {
+      try {
+        const body = await req.json<{
+          products: {
+            prod_id: string;
+            quantity: number;
+            size: number | string;
+          }[];
+          user: string;
+          address: ShippingInfo;
+        }>();
+        const user_prof = authUser(body.user);
+        if (!user_prof) {
+          return new Response("Não foi possível autenticar o usuário.", {
+            status: 403,
           });
-        items.push(item_detes);
+        }
+        const items: Array<any> = [];
+        for (const p of body.products) {
+          const item_detes = await items_db
+            .findOne<ClothingData>({ _id: new ObjectId(p.prod_id) })
+            .then((res) => {
+              console.log(res);
+              return {
+                _id: p.prod_id,
+                amount: p.quantity,
+                item: res,
+                size: p.size,
+              };
+            });
+          items.push(item_detes);
+        }
+        const total = await items.reduce(
+          (acc, elem) => acc + elem.amount * elem.item.price,
+          0,
+        );
+        const buy_res = await register_sale({
+          amount: total,
+          products: items,
+          buyer_id: new ObjectId(user_prof.id),
+          address: body.address,
+        });
+        return new Response(JSON.stringify(buy_res), { status: 200 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
       }
-      console.log(items);
-      const total = await items.reduce(
-        (acc, elem) => acc + elem.amount * elem.item.price,
-        0,
-      );
-      const buy_res = await register_sale({
-        amount: total,
-        products: items,
-        buyer_id: new ObjectId(user_prof.id),
-        address: req.body.address,
-      });
-      console.log(buy_res);
-      res.status(200).send(JSON.stringify(buy_res));
-      res.end();
-    } catch (err) {
-      console.error(err);
-      res.status(500).send(err);
-      res.end();
     }
-  },
-);
 
-app.post(
-  "/userapi/getorders",
-  async (req: Request<{ token: string }>, res: Response) => {
-    try {
-      const user = authUser(req.body.token);
-      if (!user) {
-        throw new Error("Usuário não encontrado");
-      } else {
-        const sales = await fetch_sales(new ObjectId(user!!.id));
-        res.status(200).send(JSON.stringify(sales));
+    if (path === "/userapi/getorders" && req.method === "POST") {
+      try {
+        const data = await req.formData();
+        if (!data) {
+          return new Response(null);
+        }
+        const token = data.values()?.next()?.value || null;
+        if (!token) {
+          return new Response(null);
+        }
+        const user = authUser(token);
+        if (!user) {
+          return new Response("Usuário não encontrado", { status: 406 });
+        } else {
+          const sales = await fetch_sales(new ObjectId(user!!.id));
+          return new Response(JSON.stringify(sales), { status: 200 });
+        }
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 500 });
       }
-      res.end();
-    } catch (err) {
-      console.error(err);
-      res.status(500).send(err);
-      res.end();
     }
-  },
-);
 
-app.post(
-  "/admin/products/new",
-  async function (
-    req: Request<{
-      name: string;
-      brand: string;
-      category: string;
-      size_data: size[];
-      in_stock: number;
-      price: number;
-      auth_token: string;
-      description?: string;
-      pic_url?: string[];
-      dimensions: number[];
-      weight: number;
-    }>,
-    res: Response,
-  ) {
-    try {
-      const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
-        const new_item: ClothingData = {
-          _id: new ObjectId(),
-          name: req.body.name,
-          brand: req.body.brand,
-          category: req.body.category,
-          size_data: req.body.size_data,
-          description: req.body.description,
-          in_stock: req.body.in_stock,
-          price: req.body.price,
-          pic_url: req.body.pic_url,
-          dimensions: req.body.dimensions,
-          weight: req.body.weight,
-        };
-        await addItem(new_item);
-        res.status(200).send(new_item);
-        res.end();
-      } else {
-        res.status(401).send("Usuário não autorizado");
-        res.end();
+    if (path === "/admin/products/new" && req.method === "POST") {
+      try {
+        const body = await req.json<{
+          name: string;
+          brand: string;
+          category: string;
+          size_data: size[];
+          in_stock: number;
+          price: number;
+          auth_token: string;
+          description?: string;
+          pic_url?: string[];
+          dimensions: number[];
+          weight: number;
+        }>();
+        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+          const new_item: ClothingData = {
+            _id: new ObjectId(),
+            name: body.name,
+            brand: body.brand,
+            category: body.category,
+            size_data: body.size_data,
+            description: body.description,
+            in_stock: body.in_stock,
+            price: body.price,
+            pic_url: body.pic_url,
+            dimensions: body.dimensions,
+            weight: body.weight,
+          };
+          await addItem(new_item);
+          return new Response(JSON.stringify(new_item), { status: 200 });
+        } else {
+          return new Response(JSON.stringify("Usuário não autorizado"), {
+            status: 401,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
       }
-    } catch (err) {
-      console.error(err);
-      res.status(503).send(err);
-      res.end();
     }
-  },
-);
 
-app.patch(
-  "/admin/products/update",
-  async function (
-    req: Request<{
-      id: string;
-      name: string;
-      brand: string;
-      category: string;
-      size_data: size[];
-      in_stock: number;
-      price: number;
-      auth_token: string;
-      description?: string;
-      pic_url?: string[];
-      dimensions: number[];
-      weight: number;
-    }>,
-    res: Response,
-  ) {
-    try {
-      const user_fid: TokenResponse | undefined = authUser(req.body.auth_token);
-      if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
-        const updated_item: ClothingData = {
-          _id: new ObjectId(req.body.id),
-          name: req.body.name,
-          brand: req.body.brand,
-          category: req.body.category,
-          size_data: req.body.size_data,
-          description: req.body.description,
-          in_stock: req.body.in_stock,
-          pic_url: req.body.pic_url,
-          price: req.body.price,
-          dimensions: req.body.dimensions,
-          weight: req.body.weight,
-        };
-        await changeItem(updated_item);
-        res.status(200).send(updated_item);
-        res.end();
-      } else {
-        res.status(401).send("Usuário não autorizado");
-        res.end();
+    if (path === "/admin/products/update" && req.method === "PATCH") {
+      try {
+        const body = await req.json<{
+          id: string;
+          name: string;
+          brand: string;
+          category: string;
+          size_data: size[];
+          in_stock: number;
+          price: number;
+          auth_token: string;
+          description?: string;
+          pic_url?: string[];
+          dimensions: number[];
+          weight: number;
+        }>();
+        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        if (user_fid && user_fid.func === parseInt(env.ADMIN_FID!)) {
+          const updated_item: ClothingData = {
+            _id: new ObjectId(body.id),
+            name: body.name,
+            brand: body.brand,
+            category: body.category,
+            size_data: body.size_data,
+            description: body.description,
+            in_stock: body.in_stock,
+            pic_url: body.pic_url,
+            price: body.price,
+            dimensions: body.dimensions,
+            weight: body.weight,
+          };
+          await changeItem(updated_item);
+          return new Response(JSON.stringify(updated_item), { status: 200 });
+        } else {
+          return new Response(JSON.stringify("Usuário não autorizado"), {
+            status: 401,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
       }
-    } catch (err) {
-      console.error(err);
-      res.status(503).send(err);
-      res.end();
     }
+
+    /* const acceptablePaths = [
+      "/",
+      "/items/all",
+      "/userapi/check",
+      "/userapi/login",
+      "/userapi/register",
+      "/userapi/parsetoken",
+      "/userapi/getcart",
+      "/userapi/getorders",
+      "/orders",
+      "/cart",
+      "/highlights",
+    ]; */
+
+    //if (!acceptablePaths.some((p) => p === path)) {
+    return new Response(JSON.stringify("Não encontrado."));
+    //}
   },
-);
-
-app.use((_req: Request, res: Response, _next: NextFunction) => {
-  res.status(404).send("Não encontrado.");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
-
-export default httpServerHandler({ port: PORT });
+} satisfies ExportedHandler<Env>;

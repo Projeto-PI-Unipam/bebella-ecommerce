@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Topbar from "./components/Topbar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ObjectId } from "bson";
 //import ClothesList from "./components/ClothesList";
 import SearchPage from "./pages/SearchPage";
@@ -54,12 +54,12 @@ export default function App() {
   );
 
   const check =
-    activeSession && typeof activeSession === "string" && tokenValid === true;
+    activeSession && typeof activeSession === "string" && tokenValid !== false;
 
   useEffect(() => {
     async function getUser() {
       if (userToken && userToken.length >= 1) {
-        const endpoint = ENDPOINT + "/userapi/parsetoken";
+        const endpoint = "/userapi/parsetoken";
         const check = await fetch(endpoint, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -89,48 +89,45 @@ export default function App() {
     return;
   }, [location.href, location, sessionStorage.length, location.pathname]);
 
+  const authPages = [
+    ["/cart", <CheckoutPage host={activeSession as string} />],
+    ["/orders", <OrdersPage host={activeSession as string} />],
+    ["/admin/items", <ItemHandler host={activeSession as string} />],
+  ];
+
   return (
     <div className="max-w-dvw overflow-x-clip">
       {!location.pathname.includes("login") && <Topbar host={activeSession} />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
+
           <Route path="/search" element={<SearchPage />} />
+
           {/*<Route path="/browse" element={<ClothesList />} />*/}
+
           <Route
             path="/login"
             element={<LoginPage setter={activateSession} />}
           />
-          {activeSession === false ||
-            (tokenValid === false && (
+
+          {(activeSession === false || tokenValid === false) &&
+            authPages.map((page) => (
               <Route
-                path="/cart"
+                path={page[0] as string}
                 element={
-                  <LoginPage redirect="/cart" setter={activateSession} />
+                  <LoginPage
+                    redirect={page[0] as string}
+                    setter={activateSession}
+                  />
                 }
               />
             ))}
 
-          {check && (
-            <Route
-              path="/admin/items"
-              element={<ItemHandler host={activeSession} />}
-            />
-          )}
-
-          {check && (
-            <Route
-              path="/cart"
-              element={<CheckoutPage host={activeSession} />}
-            />
-          )}
-
-          {check && (
-            <Route
-              path="/orders"
-              element={<OrdersPage host={activeSession} />}
-            />
-          )}
+          {check &&
+            authPages.map((page) => (
+              <Route path={page[0] as string} element={page[1] as ReactNode} />
+            ))}
         </Routes>
       </BrowserRouter>
       {!location.pathname.includes("login") && <Footer />}

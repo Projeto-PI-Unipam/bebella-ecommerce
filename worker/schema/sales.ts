@@ -37,6 +37,7 @@ export interface WebSale {
   date?: Date;
   buyer_id: ObjectId;
   payment_db_id?: string;
+  pay_state?: any;
 }
 
 export async function register_sale(sale: WebSale) {
@@ -110,8 +111,36 @@ export async function register_sale(sale: WebSale) {
 export async function fetch_sales(user_id: ObjectId) {
   try {
     //const user = await user_coll.findOne({ _id: user_id });
-    const sales = await db_coll.find({ buyer_id: user_id }).toArray();
-    return sales;
+    const sales = (
+      await db_coll.find<WebSale>({ buyer_id: user_id }).toArray()
+    ).filter((r: WebSale) => typeof r.payment_db_id === "string");
+    let sales_detailed: Array<WebSale> = [];
+    let iter = 0;
+    let timeout = 200;
+    while (iter < sales.length) {
+      const sale = sales[iter];
+      await new Promise((r) => setTimeout(r, timeout));
+      const sale_detes = await fetch(
+        `https://api.mercadopago.com/v1/orders/${sale.payment_db_id!!}`,
+        {
+          headers: {
+            Authorization: `Bearer ${env.MP_ACCESS}`,
+          },
+          method: "GET",
+        },
+      );
+      if (sale_detes.ok) {
+        const fmt_detes = await sale_detes.json();
+        const new_sale = { ...sale, pay_state: fmt_detes };
+        sales_detailed.push(new_sale);
+        iter += 1;
+      } else {
+        if (sale_detes.status === 429) {
+          timeout *= 2;
+        }
+      }
+    }
+    return sales_detailed;
   } catch (err) {
     console.error(err);
     throw err;

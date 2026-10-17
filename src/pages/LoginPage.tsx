@@ -1,10 +1,9 @@
-import { useEffectEvent, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useState } from "react";
 import { hash } from "bcryptjs";
 import "./LoginPage.css";
 import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
 import { saveToken } from "../App";
-import { ENDPOINT } from "../App";
 
 export default function LoginPage({
   redirect,
@@ -27,7 +26,7 @@ export default function LoginPage({
   const tryLogin = useEffectEvent(async () => {
     setPending(true);
     const hashpass = await hash(pass, salt || "");
-    const endpoint = ENDPOINT + "/userapi/login";
+    const endpoint = "/userapi/login";
     const response = await fetch(endpoint, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -53,7 +52,7 @@ export default function LoginPage({
   });
   const checkUser = useEffectEvent(async () => {
     setPending(true);
-    const endpoint = ENDPOINT + "/userapi/check";
+    const endpoint = "/userapi/check";
     const response = await fetch(endpoint, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -78,8 +77,18 @@ export default function LoginPage({
     return;
   });
   /* const createUser = useEffectEvent(async () => {
-    const endpoint = import.meta.env.VITE_ENDPOINT + "/userapi/register";
   }); */
+  const handle_keys = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Enter" && ["@", "."].every((s) => email.includes(s))) {
+      checkUser();
+    }
+  }, []);
+  useEffect(() => {
+    document.addEventListener("keydown", handle_keys);
+    return () => {
+      document.removeEventListener("keydown", handle_keys);
+    };
+  }, [handle_keys]);
 
   if (!location.href.includes("/login")) {
     return <></>;
@@ -187,20 +196,14 @@ export default function LoginPage({
               {" da Bebella Boutique."}
             </p>
           </div>
-          <div
-            style={{
-              fontFamily: "Prompt",
-              fontWeight: 500,
-              fontSize: "0.8rem",
-            }}
-          >
+          <div className="flex flex-row items-center justify-end">
             <button
               type="button"
-              className="login-botao"
+              className="font-[Prompt] rounded-2xl border-2 border-solid border-[#f6bebf] w-28 h-12 justify-self-end bg-[#f6bebf] text-md font-medium text-neutral-800"
               id="botaoContinuar"
               onClick={() => checkUser()}
             >
-              {"Continuar"}
+              <span className="pl-2 pr-2">{"Continuar".toUpperCase()}</span>
             </button>
           </div>
           {/*</form>*/}

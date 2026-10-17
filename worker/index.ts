@@ -2,13 +2,13 @@
 
 export default {
   async fetch(req: Request, _: Env): Promise<Response> {
-    console.log((await req.json<any>()).website);
+    const url = new URL(req.url);
 
-    if (req.url.includes("/userapi/getcart")) {
+    if ((url.pathname = "/userapi/getcart")) {
       try {
         console.log("ok!");
-        console.log(JSON.stringify(req.body));
-        return new Response(JSON.stringify("ok!"));
+        console.log(JSON.parse(decodeURIComponent(await req.text())));
+        return new Response("ok");
         /* const authed_data = authUser(req.body?.token);
       if (!authed_data) {
         res
