@@ -23,9 +23,7 @@
 **/*.sln
 **/*.sw?
 
-server/.*
-client/src/.*
-client/src/.*/
+.env
 **/*.env
 **/.env
 **/config.env
@@ -33,3 +31,7 @@ client/src/.*/
 **/devenv.*
 **/.pre-commit-config.yaml
 **/secretspec*
+
+# Cloudflare
+.wrangler
+.dev.vars*

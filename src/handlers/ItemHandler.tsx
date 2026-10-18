@@ -1,0 +1,112 @@
+/*
+  useful datapoints:
+    - total sold in month + value
+    - total sold all time + value
+    - most sold product overall
+    - most sold product in each category
+    - most profitable products
+    - products running out of stock
+    - monthly sale and revenue charts
+*/
+
+import { useEffect, useState } from "react";
+import { type ClothesModel } from "../database/Schema";
+import { useLocation } from "react-router-dom";
+import { ENDPOINT } from "../App";
+
+interface DataPoints {
+  /*totalSold: number;
+  totalOutValue: number;
+  totalInValue: number;
+  mostSold: ClothesModel[];
+  mostSoldInCat?: ClothesModel;
+  mostProfitable: ClothesModel[];*/
+  lowStockProducts: ClothesModel[];
+  total: ClothesModel[];
+  /*monthlySoldPoints: number[];
+  monthlyOutPoints: number[];
+  monthlyInPoints: number[];*/
+  productsCount: number;
+}
+
+export default function ItemHandler({ host }: { host: string }) {
+  const [showWarn, activateWarn] = useState<number>(1);
+  const [datapoints, setData] = useState<DataPoints | null>(null);
+  const [adding, showAdd] = useState<boolean>(false);
+  const [formName, setName] = useState<string>("");
+  const location = useLocation();
+  useEffect(() => {
+    async function fetchData() {
+      if (host) {
+        const endpoint = ENDPOINT + `/admin/getproducts`;
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ auth_token: host }),
+          /*body: JSON.stringify({
+          auth_token: host,
+          //stockWarn: 10,
+          //category: "",
+        }),*/
+        });
+        if (!response.ok) {
+          activateWarn(response.status === 401 ? 2 : 1);
+          return;
+        } else {
+          const res_json = response.json();
+          if (!res_json) {
+            activateWarn(2);
+          } else {
+            activateWarn(0);
+            const res = await res_json;
+            setData(res);
+          }
+        }
+      }
+    }
+    fetchData();
+    return;
+  }, [location.pathname, host]);
+  if (adding) {
+    return (
+      <div className="w-full h-full flex flex-col justify-center content-center">
+        <div className="p-8">
+          <span className="font-[Boston_Angel] text-5xl text-neutral-700">
+            {"Adicionar novo produto"}
+          </span>
+        </div>
+        <form>
+          <input
+            className="inline-flex box-border h-10 w-120 rounded-lg border-1 border-neutral-400 self-center justify-center place-self-center"
+            type="text"
+            value={formName}
+            onChange={(inp) => setName(inp.target.value)}
+          />
+        </form>
+      </div>
+    );
+  }
+  if (showWarn === 0 && host) {
+    return (
+      <div>
+        <h1>{"Autorizado"}</h1>
+        <p>{`Total de produtos: ${datapoints?.productsCount ?? 0}`}</p>
+        <button
+          type="button"
+          className="h-50 w-50 bg-blue-100"
+          onClick={() => showAdd(true)}
+        />
+      </div>
+    );
+  } else if (showWarn === 2) {
+    return (
+      <div>
+        <h1>403: não autorizado</h1>
+      </div>
+    );
+  } else {
+    return <></>;
+  }
+}
