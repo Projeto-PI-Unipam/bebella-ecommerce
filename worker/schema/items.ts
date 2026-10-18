@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb";
-import db from "../db/connection.ts";
 
 export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
@@ -23,30 +22,4 @@ export interface CartProd {
   item: ClothingData;
   amount: number;
   size: size;
-}
-
-const db_coll = db.collection("items");
-
-export async function addItem(new_item: ClothingData) {
-  try {
-    await db_coll.insertOne(new_item).catch(console.dir);
-    return;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
-
-export async function changeItem(update: ClothingData) {
-  try {
-    await db_coll.updateOne(
-      { _id: { $eq: update._id } },
-      {
-        $set: update,
-      },
-    );
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
 }

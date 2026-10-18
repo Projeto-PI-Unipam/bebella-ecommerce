@@ -1,32 +1,25 @@
 import { ObjectId } from "mongodb";
-import {
-  loginUser,
-  genToken,
-  userExists,
-  addUser,
-  type TokenResponse,
-  authUser,
-} from "./schema/users.ts";
 
-import { type UserData } from "./schema/users.ts";
-import {
-  type ClothingData,
-  type size,
-  addItem,
-  changeItem,
-} from "./schema/items.ts";
-import db from "./db/connection.ts";
-import {
-  fetch_sales,
-  register_sale,
-  type ShippingInfo,
-} from "./schema/sales.ts";
+//import { type UserData } from "./schema/users.ts";
+import { type ClothingData, type size } from "./schema/items.ts";
+import { type ShippingInfo } from "./schema/sales.ts";
 
-const items_db = db.collection("items");
-const users_db = db.collection("users");
+interface Env {
+  ADMIN_FID: SecretsStoreSecret;
+  DBPROD_URL: SecretsStoreSecret;
+  JWT_SEC: SecretsStoreSecret;
+  MP_ACCESS: SecretsStoreSecret;
+  ASSETS: Fetcher;
+  MONGODB_CONNECTION: DurableObjectNamespace<MongoDBConnection>;
+}
+
+import { MongoDBConnection } from "./db/connection.ts";
 
 export default {
   async fetch(req: Request, env): Promise<Response> {
+    const mongo_id = env.MONGODB_CONNECTION.idFromName("mongodb-connection");
+    const db = env.MONGODB_CONNECTION.get(mongo_id, { locationHint: "sam" });
+
     const url = new URL(req.url);
     const path = url.pathname;
 
@@ -34,24 +27,12 @@ export default {
       return new Response(JSON.stringify("ok!"));
     }
 
-    if (path === "/browse" && req.method === "GET") {
-      try {
-        let results = await items_db.find({}).toArray();
-        let count = await items_db.estimatedDocumentCount();
-        return new Response(JSON.stringify([results, count]), { status: 200 });
-      } catch (err) {
-        console.error(err);
-        return new Response(JSON.stringify("Erro ao buscar itens"), {
-          status: 503,
-        });
-      }
-    }
-
     if (path === "/items/all" && req.method === "GET") {
       try {
-        let results = await items_db.find({}).toArray();
-        let count = await items_db.estimatedDocumentCount();
-        return new Response(JSON.stringify([results, count]), { status: 200 });
+        let results = JSON.parse(await db.get_all_items()) as Array<
+          ClothingData[] | number
+        >;
+        return new Response(JSON.stringify(results), { status: 200 });
       } catch (err) {
         console.error(err);
         return new Response(JSON.stringify("Erro ao buscar itens"), {
@@ -63,11 +44,10 @@ export default {
     if (path.startsWith("/items/category/") && req.method === "GET") {
       try {
         const search = path.replace("/items/category/", "");
-        const search_reg = new RegExp(`.*${search}.*`, `gi`);
-        const query = { category: search_reg };
-        const results = await items_db.find(query).toArray();
-        const count = await items_db.countDocuments(query);
-        return new Response(JSON.stringify([results, count]), { status: 200 });
+        const results = JSON.parse(await db.search_categories(search)) as Array<
+          ClothingData[] | number
+        >;
+        return new Response(JSON.stringify(results), { status: 200 });
       } catch (err) {
         console.error(err);
         return new Response(JSON.stringify("Erro ao buscar itens"), {
@@ -79,11 +59,10 @@ export default {
     if (path.startsWith("/items/search/") && req.method === "GET") {
       try {
         const search = path.replace("/items/search/", "");
-        const search_reg = new RegExp(`.*${search}.*`, "gi");
-        const query = { $or: [{ name: search_reg }, { brand: search_reg }] };
-        const results = await items_db.find(query).toArray();
-        const count = await items_db.countDocuments(query);
-        return new Response(JSON.stringify([results, count]), { status: 200 });
+        const results = JSON.parse(await db.search_items(search)) as Array<
+          ClothingData[] | number
+        >;
+        return new Response(JSON.stringify(results), { status: 200 });
       } catch (err) {
         console.error(err);
         return new Response(JSON.stringify("Erro ao buscar itens"), {
@@ -92,14 +71,11 @@ export default {
       }
     }
 
-    if (path.startsWith("/view/product/") && req.method === "GET") {
+    if (path.startsWith("/items/view/") && req.method === "GET") {
       try {
-        const collection = db.collection("items");
-        const prod_id = path.replace("/view/product/", "");
-        const query = await collection.findOne({
-          _id: { $eq: new ObjectId(prod_id) },
-        });
-        if (!query) {
+        const prod_id = path.replace("/items/view/", "");
+        const query = JSON.parse(await db.fetch_item(prod_id));
+        if (!query || !query._id) {
           return new Response(JSON.stringify("Produto não encontrado"), {
             status: 404,
           });
@@ -114,11 +90,15 @@ export default {
     if (path === "/admin/getproducts" && req.method === "POST") {
       try {
         const body = await req.json<any>();
-        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        const user_fid = JSON.parse(
+          (await db.auth_user(body.auth_token)) || "{}",
+        );
         if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           if (path === body.category && body.category.length >= 1) {
           } else {
-            const full_data = await items_db.find<ClothingData>({}).toArray();
+            const db_data = JSON.parse(await db.get_all_items());
+            const full_data = db_data[0] as ClothingData[];
+            const db_count = db_data[1] as number;
             const datapoints = {
               //totalSold: //todo: this must look in the sales database
               // totalOutValue: //todo: see whether it's necessary to add buy_price parameter to clothes
@@ -135,7 +115,7 @@ export default {
               //monthlySoldPoints:
               //monthlyOutPoints:
               //monthlyInPoints:
-              productsCount: await items_db.estimatedDocumentCount(),
+              productsCount: db_count,
             };
             return new Response(JSON.stringify(datapoints), { status: 200 });
           }
@@ -153,11 +133,14 @@ export default {
     if (path === "/userapi/check" && req.method === "POST") {
       const user_email = (await req.formData()).values().next().value;
       if (!user_email) return new Response(null);
-      const user_res = await userExists(user_email, true);
-      if (user_res === false) {
+      const user_res = JSON.parse(
+        (await db.user_exists(user_email, true)) || "{}",
+      );
+      if (user_res === false || !user_res) {
         return new Response(JSON.stringify(false), { status: 206 });
       } else {
-        return new Response(JSON.stringify((user_res as UserData).salt), {
+        const salt = user_res.salt;
+        return new Response(JSON.stringify(salt), {
           status: 200,
         });
       }
@@ -166,10 +149,10 @@ export default {
     if (path === "/userapi/parsetoken" && req.method === "POST") {
       try {
         const token = (await req.formData()).values().next().value;
-        const user_fid: TokenResponse | undefined = authUser(
-          token.replaceAll(/['"]/g, ""),
+        const user_fid = JSON.parse(
+          (await db.auth_user(token.replaceAll(/['"]/g, ""))) || "{}",
         );
-        if (user_fid) {
+        if (user_fid && user_fid.id) {
           return new Response(null, { status: 204 });
         } else {
           return new Response(null, { status: 406 });
@@ -182,31 +165,32 @@ export default {
     if (path === "/userapi/login" && req.method === "POST") {
       try {
         const data = (await req.formData()).values();
+        if (!data) return new Response(null, { status: 401 });
         const body = {
           email: data.next().value,
           password: data.next().value,
         };
+        if (!body) return new Response(null, { status: 401 });
         if (body.email && body.password) {
-          const result = await loginUser(body.email, body.password);
+          const result = JSON.parse(
+            (await db.login_user(body.email, body.password)) || "{}",
+          );
           if (!result || !result._id) {
             return new Response(null, { status: 406 });
+          } else if (typeof result === "string") {
+            if (!(result.includes("Senha") || result.includes("encontrado"))) {
+              console.error(result);
+            }
+            return new Response(JSON.stringify(result), { status: 406 });
           } else {
-            const new_token = genToken(result);
+            const new_token = await db.gen_token(result);
             return new Response(JSON.stringify(new_token), { status: 200 });
           }
         } else {
           return new Response(null, { status: 406 });
         }
       } catch (err: any) {
-        if (
-          path === err.message.includes("Senha") ||
-          err.message.includes("encontrado")
-        ) {
-          return new Response(JSON.stringify(err), { status: 406 });
-        } else {
-          console.error(err);
-          return new Response(JSON.stringify(err), { status: 406 });
-        }
+        return new Response(err, { status: 406 });
       }
     }
 
@@ -220,14 +204,20 @@ export default {
         phone: data.next().value,
       };
       try {
-        const new_user = await addUser(
-          body.name,
-          body.email,
-          body.password,
-          body.birth_date,
-          body.phone,
+        const new_user = JSON.parse(
+          (await db.add_user(
+            body.name,
+            body.email,
+            body.password,
+            body.birth_date,
+            body.phone,
+          )) || "{}",
         );
-        return new Response(JSON.stringify(new_user!), { status: 200 });
+        if (new_user && new_user._id) {
+          return new Response(JSON.stringify(new_user!), { status: 200 });
+        } else {
+          return new Response(null, { status: 400 });
+        }
       } catch (err) {
         console.error(err);
         return new Response(JSON.stringify(err), { status: 503 });
@@ -244,8 +234,8 @@ export default {
         if (!token) {
           return new Response(null);
         }
-        const authed_data = authUser(token);
-        if (!authed_data) {
+        const authed_data = JSON.parse((await db.auth_user(token)) || "{}");
+        if (!authed_data || !authed_data.id) {
           return new Response(
             JSON.stringify(
               "Usuário não autenticado ou com sessão expirada. Por favor, faça login novamente.",
@@ -253,13 +243,11 @@ export default {
             { status: 403 },
           );
         }
-        const user_db = await users_db.findOne({
-          _id: new ObjectId(authed_data!.id),
-        });
-        if (!user_db) {
+        const user_db = JSON.parse(await db.fetch_user(await authed_data!.id));
+        if (!user_db || !user_db._id) {
           return new Response(null, { status: 406 });
         }
-        const prods = user_db.cart_products;
+        const prods = await user_db.cart_products;
         return new Response(JSON.stringify(prods), { status: 200 });
       } catch (err) {
         console.error(err);
@@ -278,22 +266,23 @@ export default {
           user: string;
           address: ShippingInfo;
         }>();
-        const user_prof = authUser(body.user);
-        if (!user_prof) {
+        const user_prof = JSON.parse((await db.auth_user(body.user)) || "{}");
+        if (!user_prof || !user_prof.id) {
           return new Response("Não foi possível autenticar o usuário.", {
             status: 403,
           });
         }
         const items: Array<any> = [];
         for (const p of body.products) {
-          const item_detes = await items_db
-            .findOne<ClothingData>({ _id: new ObjectId(p.prod_id) })
-            .then((res) => {
-              console.log(res);
+          const item_detes = await db
+            .fetch_item(p.prod_id)
+            .then((res: string) => {
+              const item_parsed = JSON.parse(res) as ClothingData;
+              console.log(item_parsed);
               return {
                 _id: p.prod_id,
                 amount: p.quantity,
-                item: res,
+                item: item_parsed,
                 size: p.size,
               };
             });
@@ -303,13 +292,21 @@ export default {
           (acc, elem) => acc + elem.amount * elem.item.price,
           0,
         );
-        const buy_res = await register_sale({
-          amount: total,
-          products: items,
-          buyer_id: new ObjectId(user_prof.id),
-          address: body.address,
-        });
-        return new Response(JSON.stringify(buy_res), { status: 200 });
+        const buy_res = JSON.parse(
+          (await db.register_sale(
+            JSON.stringify({
+              amount: total,
+              products: items,
+              buyer_id: new ObjectId(user_prof.id),
+              address: body.address,
+            }),
+          )) || "{}",
+        );
+        if (buy_res) {
+          return new Response(JSON.stringify(buy_res), { status: 200 });
+        } else {
+          return new Response(JSON.stringify(buy_res), { status: 503 });
+        }
       } catch (err) {
         console.error(err);
         return new Response(JSON.stringify(err), { status: 503 });
@@ -326,11 +323,11 @@ export default {
         if (!token) {
           return new Response(null);
         }
-        const user = authUser(token);
-        if (!user) {
+        const user = JSON.parse((await db.auth_user(token)) || "{}");
+        if (!user || !user.id) {
           return new Response("Usuário não encontrado", { status: 406 });
         } else {
-          const sales = await fetch_sales(new ObjectId(user!!.id));
+          const sales = JSON.parse(await db.fetch_sales(user!!.id));
           return new Response(JSON.stringify(sales), { status: 200 });
         }
       } catch (err) {
@@ -354,7 +351,9 @@ export default {
           dimensions: number[];
           weight: number;
         }>();
-        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        const user_fid = JSON.parse(
+          (await db.auth_user(body.auth_token)) || "{}",
+        );
         if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           const new_item: ClothingData = {
             _id: new ObjectId(),
@@ -369,7 +368,7 @@ export default {
             dimensions: body.dimensions,
             weight: body.weight,
           };
-          await addItem(new_item);
+          await db.add_item(new_item);
           return new Response(JSON.stringify(new_item), { status: 200 });
         } else {
           return new Response(JSON.stringify("Usuário não autorizado"), {
@@ -398,7 +397,9 @@ export default {
           dimensions: number[];
           weight: number;
         }>();
-        const user_fid: TokenResponse | undefined = authUser(body.auth_token);
+        const user_fid = JSON.parse(
+          (await db.auth_user(body.auth_token)) || "{}",
+        );
         if (user_fid && user_fid.func === parseInt(await env.ADMIN_FID.get())) {
           const updated_item: ClothingData = {
             _id: new ObjectId(body.id),
@@ -413,7 +414,7 @@ export default {
             dimensions: body.dimensions,
             weight: body.weight,
           };
-          await changeItem(updated_item);
+          await db.change_item(updated_item);
           return new Response(JSON.stringify(updated_item), { status: 200 });
         } else {
           return new Response(JSON.stringify("Usuário não autorizado"), {
@@ -426,22 +427,8 @@ export default {
       }
     }
 
-    /* const acceptablePaths = [
-      "/",
-      "/items/all",
-      "/userapi/check",
-      "/userapi/login",
-      "/userapi/register",
-      "/userapi/parsetoken",
-      "/userapi/getcart",
-      "/userapi/getorders",
-      "/orders",
-      "/cart",
-      "/highlights",
-    ]; */
-
-    //if (!acceptablePaths.some((p) => p === path)) {
     return new Response(JSON.stringify("Não encontrado."));
-    //}
   },
 } satisfies ExportedHandler<Env>;
+
+export { MongoDBConnection };
