@@ -28,7 +28,6 @@
 **/.env
 **/config.env
 **/.devenv/
-**/devenv.*
 **/.pre-commit-config.yaml
 **/secretspec*
 
