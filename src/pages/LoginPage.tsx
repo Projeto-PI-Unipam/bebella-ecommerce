@@ -12,15 +12,13 @@ export default function LoginPage({
     const [email, setEmail] = useState<string>("");
     const [pass, setPass] = useState<string>("");
     const [showPass, toggleShow] = useState<boolean>(false);
-    const [status, setStatus] = useState<number>(0);
+    const [status, setStatus] = useState<number>(2);
     const [erro, setErro] = useState<string | null>(null);
 
     const [codigo, setCodigo] = useState<string>("");
     const [nome, setNome] = useState<string>("");
     const [sobrenome, setSobrenome] = useState<string>("");
-    const [dia, setDia] = useState<string>("");
-    const [mes, setMes] = useState<string>("");
-    const [ano, setAno] = useState<string>("");
+    const [nascimento, setNascimento] = useState<string>("");
     const [novaSenha, setNovaSenha] = useState<string>("");
     const [confirmaSenha, setConfirmaSenha] = useState<string>("");
 
@@ -56,7 +54,7 @@ export default function LoginPage({
     }
 
     function criarConta() {
-        if (!codigo || !nome || !sobrenome || !dia || !ano) {
+        if (!codigo || !nome || !sobrenome || !nascimento) {
             setErro("Preencha todos os campos obrigatórios.");
             return;
         }
@@ -92,7 +90,7 @@ export default function LoginPage({
                 salvarSenha();
             }
         },
-        [status, email, pass, codigo, nome, sobrenome, dia, ano, novaSenha, confirmaSenha],
+        [status, email, pass, codigo, nome, sobrenome, nascimento, novaSenha, confirmaSenha],
     );
 
     useEffect(() => {
@@ -274,30 +272,17 @@ export default function LoginPage({
                             />
                         </div>
 
-                        <div className="flex gap-4">
+                        <div className="flex flex-col gap-1">
+                            <label htmlFor="nascimento" className="font-[Prompt] text-black">
+                                data de nascimento*
+                            </label>
                             <input
-                                placeholder="dia*"
-                                inputMode="numeric"
-                                maxLength={2}
-                                value={dia}
-                                onChange={(e) => setDia(e.target.value)}
-                                className="box-border h-[calc(1.5rem+3svh)] w-24 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
-                            />
-                            <input
-                                placeholder="mês"
-                                inputMode="numeric"
-                                maxLength={2}
-                                value={mes}
-                                onChange={(e) => setMes(e.target.value)}
-                                className="box-border h-[calc(1.5rem+3svh)] w-24 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
-                            />
-                            <input
-                                placeholder="ano*"
-                                inputMode="numeric"
-                                maxLength={4}
-                                value={ano}
-                                onChange={(e) => setAno(e.target.value)}
-                                className="box-border h-[calc(1.5rem+3svh)] w-32 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                                id="nascimento"
+                                type="date"
+                                value={nascimento}
+                                onChange={(e) => setNascimento(e.target.value)}
+                                max={new Date().toISOString().slice(0, 10)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
                             />
                         </div>
 
