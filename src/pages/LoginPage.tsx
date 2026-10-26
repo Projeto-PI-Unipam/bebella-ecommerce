@@ -1,245 +1,388 @@
-import { useCallback, useEffect, useEffectEvent, useState } from "react";
-import { hash } from "bcryptjs";
+import { useCallback, useEffect, useState } from "react";
 import "./LoginPage.css";
 import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
-import { saveToken } from "../App";
 
 export default function LoginPage({
-  redirect,
-  setter,
+    redirect,
 }: {
-  redirect?: string;
-  setter: Function;
+    redirect?: string;
+    setter: Function;
 }) {
-  const [email, setEmail] = useState<string>("");
-  const [pass, setPass] = useState<string>("");
-  const [showPass, toggleShow] = useState<boolean>(false);
-  const [salt, setSalt] = useState<string | null>(null);
-  const [status, setStatus] = useState<number>(0);
-  const [isPending, setPending] = useState<boolean>(false);
-  if (redirect) {
-    location.replace(
-      location.origin + ("/login?dir=" + redirect.replace("/", "")),
-    );
-  }
-  const tryLogin = useEffectEvent(async () => {
-    setPending(true);
-    const hashpass = await hash(pass, salt || "");
-    const endpoint = "/userapi/login";
-    const response = await fetch(endpoint, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      method: "POST",
-      body: new URLSearchParams({
-        email: email,
-        password: hashpass,
-      }),
-    });
-    if (response.status === 200) {
-      const token = await response.json();
-      saveToken(token);
-      setter(token);
-      location.assign(location.origin + location.search.replace("?dir=", "/"));
-    } else if (response.status === 406) {
-      alert("Dados incorretos. Verifique a senha inserida!");
-    } else {
-      console.error(response.statusText);
+    const [email, setEmail] = useState<string>("");
+    const [pass, setPass] = useState<string>("");
+    const [showPass, toggleShow] = useState<boolean>(false);
+    const [status, setStatus] = useState<number>(0);
+    const [erro, setErro] = useState<string | null>(null);
+
+    const [codigo, setCodigo] = useState<string>("");
+    const [nome, setNome] = useState<string>("");
+    const [sobrenome, setSobrenome] = useState<string>("");
+    const [dia, setDia] = useState<string>("");
+    const [mes, setMes] = useState<string>("");
+    const [ano, setAno] = useState<string>("");
+    const [novaSenha, setNovaSenha] = useState<string>("");
+    const [confirmaSenha, setConfirmaSenha] = useState<string>("");
+
+    useEffect(() => {
+        if (redirect) {
+            location.replace(
+                location.origin + ("/login?dir=" + redirect.replace("/", "")),
+            );
+        }
+    }, [redirect]);
+
+    function voltarParaEmail() {
+        setStatus(0);
+        setErro(null);
+        setPass("");
     }
-    setPending(false);
-    return;
-  });
-  const checkUser = useEffectEvent(async () => {
-    setPending(true);
-    const endpoint = "/userapi/check";
-    const response = await fetch(endpoint, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      method: "POST",
-      body: new URLSearchParams({
-        email: email,
-      }),
-    });
-    if (!response.ok) {
-      console.error(response.statusText);
-    } else {
-      if (response.status === 200) {
-        const res_salt: string = await response.json();
-        setSalt(res_salt);
+
+    function continuar() {
+        if (!["@", "."].every((s) => email.includes(s))) {
+            setErro("Digite um e-mail válido.");
+            return;
+        }
+        setErro(null);
         setStatus(1);
-      } else if (response.status === 206) {
-        setStatus(2);
-      }
     }
-    setPending(false);
-    return;
-  });
-  /* const createUser = useEffectEvent(async () => {
-  }); */
-  const handle_keys = useCallback((event: KeyboardEvent) => {
-    if (event.key === "Enter" && ["@", "."].every((s) => email.includes(s))) {
-      checkUser();
+
+    function confirmarSenha() {
+        if (pass.length < 1) {
+            setErro("Digite sua senha.");
+            return;
+        }
+        setErro(null);
     }
-  }, []);
-  useEffect(() => {
-    document.addEventListener("keydown", handle_keys);
-    return () => {
-      document.removeEventListener("keydown", handle_keys);
-    };
-  }, [handle_keys]);
 
-  if (!location.href.includes("/login")) {
-    return <></>;
-  }
-  return (
-    <div className="login-page">
-      <div className="login-padrao"></div>
-      <div className="login-conteudo">
-        <img src={logoHorizontal} alt="Bebella Boutique" className="logo" />
-        <div style={{ visibility: status === 0 ? "visible" : "hidden" }}>
-          <h1
-            className="login-titulo"
-            style={{
-              fontSize: "calc(2rem + 0.8svw)",
-              fontWeight: 500,
-              margin: "0 0 8px auto",
-              lineHeight: "calc(1.5rem + 3svh)",
-              wordSpacing: "-0.4dvw",
-              fontFamily: "Prompt",
-              color: "#000",
-              justifySelf: "flex-start",
-              textAlign: "left",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "calc(2rem + 0.8svw)",
-                fontWeight: 500,
-                margin: "0 0 8px 0",
-                lineHeight: "calc(1.5rem + 3svh)",
-                fontFamily: "Prompt",
-                wordSpacing: "1px",
-                color: "#f6bebf",
-                justifySelf: "flex-start",
-                textAlign: "left",
-              }}
-            >
-              Entre
-            </span>
-            <br /> ou crie sua conta
-          </h1>
-          <br />
-          <p
-            className="login-subtitulo"
-            style={{
-              display: "flex",
-              fontWeight: 500,
-              color: "#000",
-              fontFamily: "Prompt",
-              marginTop: "0px",
-              paddingTop: "0px",
-              fontSize: "calc(1rem + 0.5svh)",
-            }}
-          >
-            digite um e-mail para continuar
-          </p>
-          {/*<form>*/}
-          <label>
-            <p
-              style={{
-                display: "flex",
-                color: "#000",
-                fontFamily: "Prompt",
-                marginTop: "0px",
-                paddingTop: "4dvh",
-                textIndent: 4,
-              }}
-            >
-              e-mail*
-            </p>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                background: "#fff",
-                width: "100%",
-                height: "calc(1.5rem + 3svh)",
-                boxSizing: "border-box",
-                border: "1px solid #f6bebf",
-                borderRadius: "12px",
-                fontFamily: "Prompt",
-                fontSize: "calc(0.75rem + 1svh)",
-                color: "#000",
-              }}
-            />
-          </label>
-          <div
-            style={{
-              fontFamily: "Prompt",
-              width: "calc(15rem + 5dvw)",
-              color: "#000",
-              textAlign: "left",
-              paddingTop: "2dvh",
-              paddingBottom: "2dvh",
-              textWrap: "wrap",
-              breakInside: "avoid",
-            }}
-          >
-            <p className="login-termos">
-              {"Ao clicar em continuar, afirmo que concordo com a "}
-              <a href="#">{"Política de Privacidade"}</a>
-              {" e os "}
-              <a href="#">{"Termos de Uso"}</a>
-              {" da Bebella Boutique."}
-            </p>
-          </div>
-          <div className="flex flex-row items-center justify-end">
-            <button
-              type="button"
-              className="font-[Prompt] rounded-2xl border-2 border-solid border-[#f6bebf] w-28 h-12 justify-self-end bg-[#f6bebf] text-md font-medium text-neutral-800"
-              id="botaoContinuar"
-              onClick={() => checkUser()}
-            >
-              <span className="pl-2 pr-2">{"Continuar".toUpperCase()}</span>
-            </button>
-          </div>
-          {/*</form>*/}
-        </div>
-        <div style={{ visibility: status === 1 ? "visible" : "hidden" }}>
-          {/*pagina de login com senha*/}
-          <input
-            type="password"
-            onChange={(event) => setPass(event.target.value)}
-            value={pass}
-            style={{
-              background: "#fff",
-              width: "100%",
-              height: "calc(1.5rem + 3svh)",
-              boxSizing: "border-box",
-              border: "1px solid #f6bebf",
-              borderRadius: "12px",
-              fontFamily: "Prompt",
-              fontSize: "calc(0.75rem + 1svh)",
-              color: "#000",
-            }}
-          />
-          <button
-            type="button"
-            className="login-botao"
-            id="botaoContinuar"
-            onClick={() => tryLogin()}
-          >
-            {"Logar"}
-          </button>
-        </div>
+    function criarConta() {
+        if (!codigo || !nome || !sobrenome || !dia || !ano) {
+            setErro("Preencha todos os campos obrigatórios.");
+            return;
+        }
+        setErro(null);
+    }
 
-        <div style={{ visibility: status === 2 ? "visible" : "hidden" }}>
-          {/*pagina de criar conta*/}
+    function salvarSenha() {
+        if (!codigo) {
+            setErro("Digite o código que enviamos para o seu e-mail.");
+            return;
+        }
+        if (novaSenha.length < 8) {
+            setErro("A senha precisa ter pelo menos 8 caracteres.");
+            return;
+        }
+        if (novaSenha !== confirmaSenha) {
+            setErro("As senhas não conferem.");
+            return;
+        }
+        setErro(null);
+    }
+
+    const handle_keys = useCallback(
+        (event: KeyboardEvent) => {
+            if (event.key !== "Enter") return;
+            if (status === 0) {
+                continuar();
+            } else if (status === 1) {
+                confirmarSenha();
+            } else if (status === 2) {
+                criarConta();
+            } else if (status === 3) {
+                salvarSenha();
+            }
+        },
+        [status, email, pass, codigo, nome, sobrenome, dia, ano, novaSenha, confirmaSenha],
+    );
+
+    useEffect(() => {
+        document.addEventListener("keydown", handle_keys);
+        return () => {
+            document.removeEventListener("keydown", handle_keys);
+        };
+    }, [handle_keys]);
+
+    if (!location.href.includes("/login")) {
+        return <></>;
+    }
+
+    return (
+        <div className="login-page">
+            <div className="login-padrao"></div>
+            <div className="login-conteudo">
+                <img src={logoHorizontal} alt="Bebella Boutique" className="logo" />
+
+                {status === 0 && (
+                    <div className="flex flex-col gap-4 text-left">
+                        <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
+                            <span className="text-[#f6bebf]">Entre</span>
+                            <br /> ou crie sua conta
+                        </h1>
+
+                        <p className="font-[Prompt] text-[calc(1rem+0.5svh)] font-medium text-black">
+                            digite um e-mail para continuar
+                        </p>
+
+                        <div className="flex flex-col gap-1">
+                            <label htmlFor="email" className="font-[Prompt] text-black">
+                                e-mail*
+                            </label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                        </div>
+
+                        {erro && (
+                            <p className="font-[Prompt] text-sm text-red-700">{erro}</p>
+                        )}
+
+                        <p className="max-w-[500px] font-[Prompt] text-black">
+                            Ao clicar em continuar, afirmo que concordo com a{" "}
+                            <a href="#" className="font-[Prompt] text-[#f6bebf] underline">
+                                Política de Privacidade
+                            </a>{" "}
+                            e os{" "}
+                            <a href="#" className="font-[Prompt] text-[#f6bebf] underline">
+                                Termos de Uso
+                            </a>{" "}
+                            da Bebella Boutique.
+                        </p>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={continuar}
+                                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
+                            >
+                                CONTINUAR
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {status === 1 && (
+                    <div className="flex flex-col gap-4 text-left">
+                        <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
+                            Confirme a senha para continuar
+                        </h1>
+
+                        <p className="font-[Prompt] text-black">
+                            {email}{" "}
+                            <button
+                                type="button"
+                                onClick={voltarParaEmail}
+                                className="font-[Prompt] text-[#f6bebf] underline"
+                            >
+                                (alterar)
+                            </button>
+                        </p>
+
+                        <div className="relative">
+                            <input
+                                type={showPass ? "text" : "password"}
+                                placeholder="Senha*"
+                                value={pass}
+                                onChange={(e) => setPass(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 pr-24 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => toggleShow(!showPass)}
+                                className="absolute top-1/2 right-3 -translate-y-1/2 font-[Prompt] text-sm text-neutral-600"
+                            >
+                                {showPass ? "ocultar" : "mostrar"}
+                            </button>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStatus(3);
+                                setErro(null);
+                            }}
+                            className="self-start font-[Prompt] text-black underline"
+                        >
+                            esqueceu sua senha?
+                        </button>
+
+                        {erro && (
+                            <p className="font-[Prompt] text-sm text-red-700">{erro}</p>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={confirmarSenha}
+                            className="h-12 w-full rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] font-[Prompt] font-medium text-neutral-800"
+                        >
+                            Confirmar
+                        </button>
+                    </div>
+                )}
+
+                {status === 2 && (
+                    <div className="flex flex-col gap-4 text-left">
+                        <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
+                            Certo, vamos criar a sua conta na{" "}
+                            <span className="text-[#f6bebf]">Bebella Boutique.</span>
+                        </h1>
+
+                        <p className="font-[Prompt] text-black">
+                            enviamos um código para
+                            <br />
+                            {email}{" "}
+                            <button
+                                type="button"
+                                onClick={voltarParaEmail}
+                                className="font-[Prompt] text-[#f6bebf] underline"
+                            >
+                                (alterar)
+                            </button>
+                        </p>
+
+                        <div className="flex flex-col items-start gap-1">
+                            <input
+                                placeholder="código"
+                                value={codigo}
+                                onChange={(e) => setCodigo(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <button
+                                type="button"
+                                className="font-[Prompt] text-sm text-black underline"
+                            >
+                                reenviar código
+                            </button>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <input
+                                placeholder="nome*"
+                                value={nome}
+                                onChange={(e) => setNome(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <input
+                                placeholder="sobrenome*"
+                                value={sobrenome}
+                                onChange={(e) => setSobrenome(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                        </div>
+
+                        <div className="flex gap-4">
+                            <input
+                                placeholder="dia*"
+                                inputMode="numeric"
+                                maxLength={2}
+                                value={dia}
+                                onChange={(e) => setDia(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-24 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <input
+                                placeholder="mês"
+                                inputMode="numeric"
+                                maxLength={2}
+                                value={mes}
+                                onChange={(e) => setMes(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-24 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <input
+                                placeholder="ano*"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={ano}
+                                onChange={(e) => setAno(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-32 rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                        </div>
+
+                        {erro && (
+                            <p className="font-[Prompt] text-sm text-red-700">{erro}</p>
+                        )}
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={criarConta}
+                                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
+                            >
+                                Criar conta
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {status === 3 && (
+                    <div className="flex flex-col gap-4 text-left">
+                        <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
+                            Verifique seu e-mail e insira uma nova senha.
+                        </h1>
+
+                        <p className="font-[Prompt] text-black">
+                            enviamos um código para
+                            <br />
+                            {email}{" "}
+                            <button
+                                type="button"
+                                onClick={voltarParaEmail}
+                                className="font-[Prompt] text-[#f6bebf] underline"
+                            >
+                                (alterar)
+                            </button>
+                        </p>
+
+                        <div className="flex flex-col items-start gap-1">
+                            <input
+                                placeholder="código"
+                                value={codigo}
+                                onChange={(e) => setCodigo(e.target.value)}
+                                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                            />
+                            <button
+                                type="button"
+                                className="font-[Prompt] text-sm text-black underline"
+                            >
+                                reenviar código
+                            </button>
+                        </div>
+
+                        <input
+                            type="password"
+                            placeholder="nova senha*"
+                            value={novaSenha}
+                            onChange={(e) => setNovaSenha(e.target.value)}
+                            className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                        />
+
+                        <input
+                            type="password"
+                            placeholder="confirmar senha*"
+                            value={confirmaSenha}
+                            onChange={(e) => setConfirmaSenha(e.target.value)}
+                            className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                        />
+
+                        {erro && (
+                            <p className="font-[Prompt] text-sm text-red-700">{erro}</p>
+                        )}
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={salvarSenha}
+                                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
+                            >
+                                salvar
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
