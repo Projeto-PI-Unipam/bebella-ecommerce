@@ -10,6 +10,7 @@ import ItemHandler from "./handlers/ItemHandler";
 import LoginPage from "./pages/LoginPage";
 import Footer from "./components/Footer";
 import OrdersPage from "./pages/OrdersPage";
+import ProductPage from "./pages/ProductPage";
 
 export const ENDPOINT = "http://localhost:8787";
 
@@ -103,6 +104,8 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
 
           <Route path="/search" element={<SearchPage />} />
+
+          <Route path="/product" element={<ProductPage />} />
 
           {/*<Route path="/browse" element={<ClothesList />} />*/}
 
