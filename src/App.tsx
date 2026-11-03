@@ -12,6 +12,8 @@ import Footer from "./components/Footer";
 import OrdersPage from "./pages/OrdersPage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
+import ProductListPage from "./pages/ProductListPage";
+
 
 export const ENDPOINT = "http://localhost:8787";
 
@@ -109,6 +111,8 @@ export default function App() {
           <Route path="/product" element={<ProductPage />} />
 
           <Route path="/carrinho" element={<CartPage />} />
+
+          <Route path="/produtos" element={<ProductListPage />} />
 
           {/*<Route path="/browse" element={<ClothesList />} />*/}
 
