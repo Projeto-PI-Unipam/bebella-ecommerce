@@ -1,54 +1,57 @@
 :root {
-  --background-active: #f6bebf;
-  --foreground-prim: #ffffff;
+	--background-active: #f6bebf;
+	--foreground-prim: #ffffff;
 }
 
 .wrapper {
-  z-index: 2;
+	z-index: 995;
 }
 
 .wrapper.dark {
-  min-width: 100%;
-  max-width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(30, 10, 15, 0.3);
+	min-width: 100%;
+	max-width: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(30, 10, 15, 0.3);
+	z-index: 996;
 }
 
 .sidemenu {
-  position: absolute;
-  top: 4px;
-  z-index: 3;
+	position: absolute;
+	top: 4px;
+	z-index: 997;
 }
 
 .sidemenu.active {
-  display: flexbox;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--background-active);
-  border-width: 2px;
-  border-radius: 0px 16px 0 16px;
-  border-color: #904070;
-  border-style: solid;
-  color: var(--foreground-prim);
-  opacity: 100% !important;
-  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
-  /*rgba(0, 0, 0, 0.2) 0 12px 15px -3px,
+	display: flexbox;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--background-active);
+	border-width: 2px;
+	border-radius: 0px 16px 0 16px;
+	border-color: #904070;
+	border-style: solid;
+	color: var(--foreground-prim);
+	opacity: 100% !important;
+	box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
+	/*rgba(0, 0, 0, 0.2) 0 12px 15px -3px,
     rgba(0, 0, 0, 0.1) 0 10px 6px -2px;*/
+	z-index: 998;
 }
 
 .sidemenu.inactive {
-  display: flexbox;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--background-active);
-  border-width: 0px;
-  border-radius: 0px 16px 0 16px;
-  border-color: #904070;
-  color: var(--foreground-prim);
+	display: flexbox;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--background-active);
+	border-width: 0px;
+	border-radius: 0px 16px 0 16px;
+	border-color: #904070;
+	color: var(--foreground-prim);
+	z-index: 997;
 }
