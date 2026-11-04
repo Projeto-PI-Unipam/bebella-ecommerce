@@ -443,7 +443,7 @@ export default {
 			}
 		}
 
-		return env.ASSETS.fetch(new URL("https://assets.local/main.tsx"));
+		return env.ASSETS.fetch(new URL("https://assets.local/"));
 	},
 } satisfies ExportedHandler<Env>;
 
