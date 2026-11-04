@@ -25,10 +25,6 @@ export default {
 		const url = new URL(req.url);
 		const path = url.pathname;
 
-		if (path === "/" && req.method === "GET") {
-			return env.ASSETS.fetch(new URL("https://assets.local/"));
-		}
-
 		if (path === "/items/all" && req.method === "GET") {
 			try {
 				const results = JSON.parse(await db.get_all_items()) as Array<
@@ -447,7 +443,7 @@ export default {
 			}
 		}
 
-		return new Response(JSON.stringify("Não encontrado."));
+		return env.ASSETS.fetch(new URL("https://assets.local/main.tsx"));
 	},
 } satisfies ExportedHandler<Env>;
 
