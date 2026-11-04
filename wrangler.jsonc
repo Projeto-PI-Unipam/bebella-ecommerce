@@ -4,11 +4,20 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "cloudbella",
+	"name": "bebella-ecommerce",
 	"main": "worker/server.ts",
-	"compatibility_date": "2026-10-06",
+	"compatibility_date": "2026-09-12",
 	"compatibility_flags": [
 		"nodejs_compat"
+	],
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [
+		{
+			"pattern": "bebellaboutique.com",
+			"custom_domain": true,
+			"enabled": true,
+		}
 	],
 	"assets": {
 		"not_found_handling": "single-page-application",
@@ -56,7 +65,7 @@
 	"migrations": [
 		{
 			"tag": "v1",
-			"new_classes": [
+			"new_sqlite_classes": [
 				"MongoDBConnection"
 			]
 		}
