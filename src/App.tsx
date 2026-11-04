@@ -1,142 +1,141 @@
+import type { ObjectId } from "bson";
+import { type ReactNode, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Topbar from "./components/Topbar";
-import { useEffect, useState, type ReactNode } from "react";
-import { ObjectId } from "bson";
-//import ClothesList from "./components/ClothesList";
-import SearchPage from "./pages/SearchPage";
-import HomePage from "./pages/HomePage";
-import CheckoutPage from "./pages/CheckoutPage";
-import ItemHandler from "./handlers/ItemHandler";
-import LoginPage from "./pages/LoginPage";
 import Footer from "./components/Footer";
+import Topbar from "./components/Topbar";
+import ItemHandler from "./handlers/ItemHandler";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProductPage from "./pages/ProductPage";
-import CartPage from "./pages/CartPage";
+//import ClothesList from "./components/ClothesList";
+import SearchPage from "./pages/SearchPage";
 
 export const ENDPOINT = "http://localhost:8787";
 
 export interface UserModel {
-  id?: ObjectId;
-  func_id?: number;
-  name: string;
-  email: string;
-  hash: string;
-  salt: string;
-  birth_date: Date;
-  picture_url?: string;
-  wishlist_ids?: string[];
-  cart_products?: string[];
-  order_addresses?: string[];
-  past_orders?: string[];
+	id?: ObjectId;
+	func_id?: number;
+	name: string;
+	email: string;
+	hash: string;
+	salt: string;
+	birth_date: Date;
+	picture_url?: string;
+	wishlist_ids?: string[];
+	cart_products?: string[];
+	order_addresses?: string[];
+	past_orders?: string[];
 }
 
 export function saveToken(token: string) {
-  sessionStorage.setItem("token", JSON.stringify(token));
+	sessionStorage.setItem("token", JSON.stringify(token));
 }
 
 function delToken() {
-  sessionStorage.setItem("token", "");
-  sessionStorage.removeItem("token");
+	sessionStorage.setItem("token", "");
+	sessionStorage.removeItem("token");
 }
 
 function getToken() {
-  const tokenString = sessionStorage.getItem("token");
-  if (!tokenString) {
-    return false;
-  }
-  const userToken = JSON.parse(tokenString);
-  return userToken;
+	const tokenString = sessionStorage.getItem("token");
+	if (!tokenString) {
+		return false;
+	}
+	const userToken = JSON.parse(tokenString);
+	return userToken;
 }
 
 export default function App() {
-  const [userToken, setToken] = useState(getToken());
-  const [tokenValid, setValid] = useState<boolean | null>(null);
-  const [activeSession, activateSession] = useState<string | boolean | null>(
-    userToken,
-  );
+	const [userToken, setToken] = useState(getToken());
+	const [tokenValid, setValid] = useState<boolean | null>(null);
+	const [activeSession, activateSession] = useState<string | boolean | null>(
+		userToken,
+	);
 
-  const check =
-    activeSession && typeof activeSession === "string" && tokenValid !== false;
+	const check =
+		activeSession && typeof activeSession === "string" && tokenValid !== false;
 
-  useEffect(() => {
-    async function getUser() {
-      if (userToken && userToken.length >= 1) {
-        const endpoint = "/userapi/parsetoken";
-        const check = await fetch(endpoint, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          method: "POST",
-          body: new URLSearchParams({
-            token: userToken,
-          }),
-        });
-        if (check.ok) {
-          setToken(userToken);
-          saveToken(userToken);
-          if (userToken) {
-            activateSession(userToken);
-            setValid(true);
-          }
-        } else {
-          delToken();
-          setValid(false);
-          activateSession(false);
-          await getUser();
-          return;
-        }
-      }
-    }
-    getUser();
-    return;
-  }, [location.href, location, sessionStorage.length, location.pathname]);
+	useEffect(() => {
+		async function getUser() {
+			if (userToken && userToken.length >= 1) {
+				const endpoint = "/userapi/parsetoken";
+				const check = await fetch(endpoint, {
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+					method: "POST",
+					body: new URLSearchParams({
+						token: userToken,
+					}),
+				});
+				if (check.ok) {
+					setToken(userToken);
+					saveToken(userToken);
+					if (userToken) {
+						activateSession(userToken);
+						setValid(true);
+					}
+				} else {
+					delToken();
+					setValid(false);
+					activateSession(false);
+					await getUser();
+					return;
+				}
+			}
+		}
+		if (authPages.map((a) => a[0]).some((p) => p === location.pathname)) {
+			getUser();
+		}
+		return;
+	}, [location.href, location, sessionStorage.length, location.pathname]);
 
-  const authPages = [
-    ["/cart", <CheckoutPage host={activeSession as string} />],
-    ["/orders", <OrdersPage host={activeSession as string} />],
-    ["/admin/items", <ItemHandler host={activeSession as string} />],
-  ];
+	const authPages = [
+		["/cart", <CartPage host={activeSession as string} />],
+		["/orders", <OrdersPage host={activeSession as string} />],
+		["/admin/items", <ItemHandler host={activeSession as string} />],
+	];
 
-  return (
-    <div className="max-w-dvw overflow-x-clip">
-      {!location.pathname.includes("login") && <Topbar host={activeSession} />}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
+	return (
+		<div className="max-w-dvw overflow-x-clip">
+			{!location.pathname.includes("login") && <Topbar host={activeSession} />}
+			<BrowserRouter>
+				<Routes>
+					{/*<Route path="/" element={<HomePage />} />*/}
+					<Route path="/" element={<OrdersPage />} />
 
-          <Route path="/search" element={<SearchPage />} />
+					<Route path="/search" element={<SearchPage />} />
 
-          <Route path="/product" element={<ProductPage />} />
+					<Route path="/product" element={<ProductPage />} />
 
-          <Route path="/carrinho" element={<CartPage />} />
+					<Route
+						path="/login"
+						element={<LoginPage setter={activateSession} />}
+					/>
 
-          {/*<Route path="/browse" element={<ClothesList />} />*/}
+					{(activeSession === false || tokenValid === false) &&
+						authPages.map((page) => (
+							<Route
+								path={page[0] as string}
+								element={
+									<LoginPage
+										redirect={page[0] as string}
+										setter={activateSession}
+									/>
+								}
+							/>
+						))}
 
-          <Route
-            path="/login"
-            element={<LoginPage setter={activateSession} />}
-          />
-
-          {(activeSession === false || tokenValid === false) &&
-            authPages.map((page) => (
-              <Route
-                path={page[0] as string}
-                element={
-                  <LoginPage
-                    redirect={page[0] as string}
-                    setter={activateSession}
-                  />
-                }
-              />
-            ))}
-
-          {check &&
-            authPages.map((page) => (
-              <Route path={page[0] as string} element={page[1] as ReactNode} />
-            ))}
-        </Routes>
-      </BrowserRouter>
-      {!location.pathname.includes("login") && <Footer />}
-    </div>
-  );
+					{check &&
+						authPages.map((page) => (
+							<Route path={page[0] as string} element={page[1] as ReactNode} />
+						))}
+				</Routes>
+			</BrowserRouter>
+			{!location.pathname.includes("login") && <Footer />}
+		</div>
+	);
 }
