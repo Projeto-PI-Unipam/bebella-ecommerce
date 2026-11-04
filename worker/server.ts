@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-
+import { MongoDBConnection } from "./db/connection.ts";
 //import { type UserData } from "./schema/users.ts";
 import type { ClothingData, size } from "./schema/items.ts";
 import type { ShippingInfo } from "./schema/sales.ts";
@@ -13,15 +13,15 @@ interface Env {
 	MONGODB_CONNECTION: DurableObjectNamespace<MongoDBConnection>;
 }
 
-import { MongoDBConnection } from "./db/connection.ts";
-
 export default {
 	async fetch(req: Request, env): Promise<Response> {
 		const mongo_id = env.MONGODB_CONNECTION.idFromName("mongodb-connection");
-		const db = env.MONGODB_CONNECTION.get(mongo_id, { locationHint: "sam" });
+		const db = env.MONGODB_CONNECTION.get(mongo_id, {
+			locationHint: "sam",
+		});
 
 		const url = new URL(req.url);
-		const path = url.pathname;
+		const path = url.pathname || "";
 
 		if (path === "/" && req.method === "GET") {
 			return env.ASSETS.fetch("https://assets.local/");
@@ -117,7 +117,9 @@ export default {
 							//monthlyInPoints:
 							productsCount: db_count,
 						};
-						return new Response(JSON.stringify(datapoints), { status: 200 });
+						return new Response(JSON.stringify(datapoints), {
+							status: 200,
+						});
 					}
 				} else {
 					return new Response(JSON.stringify("Usuário não autorizado"), {
@@ -181,10 +183,14 @@ export default {
 						if (!(result.includes("Senha") || result.includes("encontrado"))) {
 							console.error(result);
 						}
-						return new Response(JSON.stringify(result), { status: 406 });
+						return new Response(JSON.stringify(result), {
+							status: 406,
+						});
 					} else {
 						const new_token = await db.gen_token(result);
-						return new Response(JSON.stringify(new_token), { status: 200 });
+						return new Response(JSON.stringify(new_token), {
+							status: 200,
+						});
 					}
 				} else {
 					return new Response(null, { status: 406 });
@@ -214,7 +220,9 @@ export default {
 					)) || "{}",
 				);
 				if (new_user && new_user._id) {
-					return new Response(JSON.stringify(new_user!), { status: 200 });
+					return new Response(JSON.stringify(new_user!), {
+						status: 200,
+					});
 				} else {
 					return new Response(null, { status: 400 });
 				}
@@ -303,9 +311,13 @@ export default {
 					)) || "{}",
 				);
 				if (buy_res) {
-					return new Response(JSON.stringify(buy_res), { status: 200 });
+					return new Response(JSON.stringify(buy_res), {
+						status: 200,
+					});
 				} else {
-					return new Response(JSON.stringify(buy_res), { status: 503 });
+					return new Response(JSON.stringify(buy_res), {
+						status: 503,
+					});
 				}
 			} catch (err) {
 				console.error(err);
@@ -325,7 +337,9 @@ export default {
 				}
 				const user = JSON.parse((await db.auth_user(token)) || "{}");
 				if (!user || !user.id) {
-					return new Response("Usuário não encontrado", { status: 406 });
+					return new Response("Usuário não encontrado", {
+						status: 406,
+					});
 				} else {
 					const sales = JSON.parse(await db.fetch_sales(user!.id));
 					return new Response(JSON.stringify(sales), { status: 200 });
@@ -369,7 +383,9 @@ export default {
 						weight: body.weight,
 					};
 					await db.add_item(new_item);
-					return new Response(JSON.stringify(new_item), { status: 200 });
+					return new Response(JSON.stringify(new_item), {
+						status: 200,
+					});
 				} else {
 					return new Response(JSON.stringify("Usuário não autorizado"), {
 						status: 401,
@@ -415,7 +431,9 @@ export default {
 						weight: body.weight,
 					};
 					await db.change_item(updated_item);
-					return new Response(JSON.stringify(updated_item), { status: 200 });
+					return new Response(JSON.stringify(updated_item), {
+						status: 200,
+					});
 				} else {
 					return new Response(JSON.stringify("Usuário não autorizado"), {
 						status: 401,

@@ -40,8 +40,9 @@ export default function LoginPage({
 				password: hashpass,
 			}),
 		});
-		if (response.status === 200) {
-			const token = await response.json();
+		const token = await response.text();
+		console.log(token);
+		if (response.status === 200 || token) {
 			saveToken(token);
 			setter(token);
 			location.assign(location.origin + location.search.replace("?dir=", "/"));

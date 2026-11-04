@@ -104,8 +104,7 @@ export default function App() {
 			{!location.pathname.includes("login") && <Topbar host={activeSession} />}
 			<BrowserRouter>
 				<Routes>
-					{/*<Route path="/" element={<HomePage />} />*/}
-					<Route path="/" element={<OrdersPage />} />
+					<Route path="/" element={<HomePage />} />
 
 					<Route path="/search" element={<SearchPage />} />
 
