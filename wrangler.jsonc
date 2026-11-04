@@ -21,7 +21,7 @@
 	],
 	"assets": {
 		"not_found_handling": "single-page-application",
-		"directory": "./src/assets",
+		"directory": "./src",
 		"binding": "ASSETS",
 		"run_worker_first": [
 			"/userapi/*",
