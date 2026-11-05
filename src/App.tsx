@@ -1,8 +1,9 @@
 import type { ObjectId } from "bson";
-import { type ReactNode, useEffect, useState } from "react";
+import { createContext, type ReactNode, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Footer from "./components/Footer";
 import Topbar from "./components/Topbar";
+import { test_p1, test_p2 } from "./database/Test";
 import ItemHandler from "./handlers/ItemHandler";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -12,8 +13,6 @@ import OrdersPage from "./pages/OrdersPage";
 import ProductPage from "./pages/ProductPage";
 //import ClothesList from "./components/ClothesList";
 import SearchPage from "./pages/SearchPage";
-
-export const ENDPOINT = "http://localhost:8787";
 
 export interface UserModel {
 	id?: ObjectId;
@@ -48,19 +47,22 @@ function getToken() {
 	return userToken;
 }
 
+export const AuthContext = createContext<UserModel | null>(null);
+
 export default function App() {
 	const [userToken, setToken] = useState(getToken());
 	const [tokenValid, setValid] = useState<boolean | null>(null);
 	const [activeSession, activateSession] = useState<string | boolean | null>(
 		userToken,
 	);
+	const [userAuth, setUser] = useState<UserModel | null>(null);
 
 	const check =
 		activeSession && typeof activeSession === "string" && tokenValid !== false;
 
 	useEffect(() => {
 		async function getUser() {
-			if (userToken && userToken.length >= 1) {
+			if (userToken && userToken.length >= 1 && !userAuth) {
 				const endpoint = "/userapi/parsetoken";
 				const check = await fetch(endpoint, {
 					headers: {
@@ -87,9 +89,7 @@ export default function App() {
 				}
 			}
 		}
-		if (authPages.map((a) => a[0]).some((p) => p === location.pathname)) {
-			getUser();
-		}
+		getUser();
 		return;
 	}, [location.href, location, sessionStorage.length, location.pathname]);
 
@@ -104,11 +104,11 @@ export default function App() {
 			{!location.pathname.includes("login") && <Topbar host={activeSession} />}
 			<BrowserRouter>
 				<Routes>
-					<Route path="/" element={<HomePage />} />
+					<Route path="/" element={<ProductPage item={test_p1} />} />
 
 					<Route path="/search" element={<SearchPage />} />
 
-					<Route path="/product" element={<ProductPage />} />
+					<Route path="/product" element={<ProductPage item={test_p2} />} />
 
 					<Route
 						path="/login"
@@ -118,6 +118,7 @@ export default function App() {
 					{(activeSession === false || tokenValid === false) &&
 						authPages.map((page) => (
 							<Route
+								key={page[0] as string}
 								path={page[0] as string}
 								element={
 									<LoginPage
@@ -130,7 +131,11 @@ export default function App() {
 
 					{check &&
 						authPages.map((page) => (
-							<Route path={page[0] as string} element={page[1] as ReactNode} />
+							<Route
+								key={page[0] as string}
+								path={page[0] as string}
+								element={page[1] as ReactNode}
+							/>
 						))}
 				</Routes>
 			</BrowserRouter>
