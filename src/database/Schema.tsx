@@ -1,7 +1,20 @@
 import type { ObjectId } from "bson";
 
+export const bucket = "https://cdn.bebellaboutique.com";
+
 export type size = string | number;
 export const sizes = ["PP", "P", "M", "G", "GG"];
+export const def_discount = 0.28;
+export function fmt_discount(discount: number): string {
+	return `-${(discount * 100).toFixed(0)}%`;
+}
+export function before_discount(price: number, discount: number): number {
+	return price / (1 - discount);
+}
+export function apply_discount(price: number, discount: number): number {
+	return price - price * discount;
+}
+export const upfront_discount = 0.12;
 export function to_currency(amount: number): string {
 	return `R$ ${amount.toLocaleString("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
 }

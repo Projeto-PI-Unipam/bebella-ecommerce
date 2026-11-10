@@ -2,13 +2,15 @@ import BSmall from "../assets/icons/logo-png.png";
 import { ShoppingCartIcon } from "@phosphor-icons/react/dist/csr/ShoppingCart";
 import { UserIcon } from "@phosphor-icons/react/dist/csr/User";
 import { HeartIcon } from "@phosphor-icons/react/dist/csr/Heart";
-import Sidemenu from "./Sidemenu";
+import Sidemenu from "./Sidemenu.tsx";
+import { AuthContext } from "../App.tsx";
 
 import "../assets/fonts/fonts.css";
-import { useEffect, useState } from "react";
+import { useContext, useState } from "react";
 
-function Topbar({ host }: { host: string | boolean | null }) {
+function Topbar({ host }: { host: string | null }) {
   const backgroundActive = "#f6bebf";
+  const userS = useContext(AuthContext);
   const [searchText, setSearch] = useState("");
 
   return (
@@ -134,6 +136,14 @@ function Topbar({ host }: { host: string | boolean | null }) {
             size={28}
             onClick={() => location.assign(location.origin + "/cart")}
           />
+
+          {(userS?.cart_products ?? []).length > 0 && (
+            <div className="pl-0 -ml-3 -mt-6 mr-2 bg-neutral-50 border border-solid border-[#98263e] rounded-lg w-4 h-4">
+              <sup className="font-[Prompt] text-center text-[#98263e] text-xs">
+                {userS!.cart_products!.length}
+              </sup>
+            </div>
+          )}
         </div>
       </div>
     </>

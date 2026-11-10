@@ -1,43 +1,12 @@
-import { useEffect, useState } from "react";
 import { CaretDownIcon } from "@phosphor-icons/react/dist/csr/CaretDown";
-import { PageNavButton, PageNavIndicator } from "../components/PageButton";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { ObjectId } from "bson";
+import { PageNavButton, PageNavIndicator } from "../components/PageButton";
 import "../assets/fonts/fonts.css";
-import ProductCard from "../components/ProductCard";
-import { type ClothesModel, type size, sizes } from "../database/Schema";
-
-const test: ClothesModel = {
-  id: new ObjectId(),
-  db_id: new ObjectId().toString(),
-  name: "Roupa Teste",
-  brand: "Marca Proto",
-  category: "Categoria Zero",
-  size_data: (sizes as size[]).concat([40, 42] as size[]),
-  description: "Produto para testar a pesquisa do site",
-  in_stock: 3,
-  pic_url: [
-    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
-    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
-  ],
-  price: 200.5,
-};
-
-const test2: ClothesModel = {
-  id: new ObjectId(),
-  db_id: new ObjectId().toString(),
-  name: "Segundo Teste",
-  brand: "Topíssimo",
-  category: "Incrível",
-  size_data: (sizes as size[]).concat([40, 42] as size[]),
-  description: "Produto para testar a pesquisa do site, de novo!",
-  in_stock: 3,
-  pic_url: [
-    "https://farmrio.com/cdn/shop/files/farm-rio-borbofly-long-sleeve-maxi-dress_361238_1.jpg?format=pjpg&v=1787878453&width=640",
-    "https://farmrio.com/cdn/shop/files/SPRING_02_EC_R_C.jpg?format=pjpg&v=1788898867&width=640",
-  ],
-  price: 120,
-};
+import ProductCard from "../components/ProductCard.tsx";
+import { type ClothesModel, type size, sizes } from "../database/Schema.tsx";
+import { test_p1, test_p2 } from "../database/Test.tsx";
+import { ObjectId } from "bson";
 
 function formatSearch(term: string) {
   const searchRegex = new RegExp(/(\?s=)(.+)/);
@@ -49,10 +18,10 @@ function formatSearch(term: string) {
   }
 }
 
-export default function SearchPage() {
+export default function SearchPage({ searchType }: { searchType: string }) {
   //const backgroundActive = "#f6bebf";
   //const activeBorder = "#904070";
-  const [itemsBase, setItems] = useState([]);
+  const [itemsBase, setItems] = useState<ClothesModel[]>([]);
   const [itemCount, setItemCount] = useState(1);
   const [currentPage, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
@@ -62,20 +31,22 @@ export default function SearchPage() {
 
   useEffect(() => {
     async function getItems() {
-      /*console.log(location.search, formatSearch(location.search));
-      const endpoint = `http://localhost:${b_port}/items/search/${formatSearch(location.search)}`;
-      const results = await fetch(endpoint);
+      if (searchType !== "items" && searchType !== "categories") {
+        return;
+      }
+      const endpoint =
+        searchType === "items"
+          ? `/items/search/${formatSearch(location.search)}`
+          : `/items/category/${formatSearch(location.search)}`;
+      const results = await fetch(endpoint, { method: "GET" });
       if (!results.ok) {
         console.error(results.status, results.statusText);
+        return;
       }
       const fmt_res = await results.json();
       console.log(fmt_res);
       setItemCount(fmt_res[1]);
-      setItems(fmt_res[0]);*/
-
-      // test
-      setItemCount(5);
-      setItems([test, test2, test, test2, test]);
+      setItems(fmt_res[0]);
     }
     getItems();
     return;
@@ -83,9 +54,10 @@ export default function SearchPage() {
 
   function clothesList() {
     const lst = itemsBase.map((c) => {
+      const id = c._id || new ObjectId();
       const d: ClothesModel = {
-        id: c.id,
-        db_id: c._id,
+        _id: id,
+        db_id: id.toString(),
         name: c.name,
         brand: c.brand,
         category: c.category,
@@ -94,6 +66,8 @@ export default function SearchPage() {
         size_data: c.size_data,
         description: c.description,
         price: c.price,
+        dimensions: c.dimensions,
+        weight: c.weight,
       };
       return <ProductCard item={d} />;
     });

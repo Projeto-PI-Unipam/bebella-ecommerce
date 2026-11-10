@@ -1,9 +1,12 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import "../assets/fonts/fonts.css";
-import SavedCard, { savedCardHeight } from "../components/SavedCard";
-import type { CartItem, ShippingAddress } from "../database/Schema";
-import { fmt_price } from "../database/Utils";
 import { clsx } from "clsx/lite";
+import SavedCard, { savedCardHeight } from "../components/SavedCard.tsx";
+import {
+  type CartItem,
+  type ShippingAddress,
+  to_currency,
+} from "../database/Schema.tsx";
 
 const test_addy: ShippingAddress = {
   city: "Patos de Minas",
@@ -69,7 +72,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
         }),
       });
     let initial_res = await checkout_fetch();
-    let fmt_res: any = undefined;
+    let fmt_res: any;
     const checkout_test = async () => {
       if (initial_res.ok) {
         const jres = await initial_res.json();
@@ -201,6 +204,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
               className="text-sm self-end h-fit w-fit cursor-pointer hover:underline hover:italic decoration-[#f6bebf]"
               target="_blank"
               href="https://buscacepinter.correios.com.br"
+              rel="noopener"
             >
               <span>{"Não sabe seu CEP?"}</span>
             </a>
@@ -262,7 +266,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
             </span>
             {totalPrice && chosenShipping && hiddenTopics.includes(2) && (
               <span className="pb-1 text-md lg:collapse">
-                {`Total: ${fmt_price(totalPrice + chosenShipping.price) || ""}`}
+                {`Total: ${to_currency(totalPrice + chosenShipping.price) || ""}`}
               </span>
             )}
           </div>
@@ -278,13 +282,13 @@ export default function CheckoutPage({ host }: { host: string | null }) {
             {totalPrice && (
               <div className="h-fit w-full flex flex-row justify-between pl-4 pr-4 items-center">
                 <span>{`Valor do Carrinho:`}</span>
-                <span>{`${fmt_price(totalPrice || 0)}`}</span>
+                <span>{`${to_currency(totalPrice || 0)}`}</span>
               </div>
             )}
             {chosenShipping && (
               <div className="h-fit w-full flex flex-row justify-between pl-4 pr-4 items-center">
                 <span>{`Valor do Frete:`}</span>
-                <span>{`${fmt_price(totalPrice || 0)}`}</span>
+                <span>{`${to_currency(totalPrice || 0)}`}</span>
               </div>
             )}
           </div>
@@ -299,7 +303,7 @@ export default function CheckoutPage({ host }: { host: string | null }) {
             {totalPrice && chosenShipping && (
               <div className="h-full w-full flex flex-row justify-between pl-4 pr-4 items-center">
                 <span>{`Valor Total:`}</span>
-                <span>{`${fmt_price(totalPrice + chosenShipping.price || 0)}`}</span>
+                <span>{`${to_currency(totalPrice + chosenShipping.price || 0)}`}</span>
               </div>
             )}
           </div>
