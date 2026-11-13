@@ -26,6 +26,9 @@
 .env
 **/*.env
 **/.env
+.env.dev
+**/*.env.dev
+**/.env.dev
 **/config.env
 **/.devenv/
 **/.pre-commit-config.yaml

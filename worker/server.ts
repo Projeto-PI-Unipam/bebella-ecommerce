@@ -275,11 +275,13 @@ export default {
         if (!data) {
           return new Response(null);
         }
-        const token = data.values()?.next()?.value || null;
+        const token: string | null = data.values()?.next()?.value || null;
         if (!token) {
           return new Response(null);
         }
-        const authed_data = JSON.parse((await db.auth_user(token)) || "{}");
+        const authed_data = JSON.parse(
+          (await db.auth_user(token.replace(/['"]/g, ""))) || "{}",
+        );
         if (!authed_data || !authed_data.id) {
           return new Response(
             JSON.stringify(

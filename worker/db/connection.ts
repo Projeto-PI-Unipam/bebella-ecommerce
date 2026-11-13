@@ -17,11 +17,19 @@ export class MongoDBConnection extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.blockConcurrencyWhile(async () => {
-      this.client = new MongoClient(await env.DBPROD_URL.get());
-      this.db = this.client.db("bebella_store");
-      this.MP_ACCESS = await env.MP_ACCESS.get();
-      this.JWT_SEC = await env.JWT_SEC.get();
-      this.ADMIN_FID = await env.ADMIN_FID.get();
+      if (import.meta.env.MODE === "production" || env.CF_ENV == "production") {
+        this.client = new MongoClient(await env.DBPROD_URL.get());
+        this.db = this.client.db("bebella_store");
+        this.MP_ACCESS = await env.MP_ACCESS.get();
+        this.JWT_SEC = await env.JWT_SEC.get();
+        this.ADMIN_FID = await env.ADMIN_FID.get();
+      } else {
+        this.client = new MongoClient(env.DBPROD_URL);
+        this.db = this.client.db("bebella_store");
+        this.MP_ACCESS = env.MP_ACCESS;
+        this.JWT_SEC = env.JWT_SEC;
+        this.ADMIN_FID = env.ADMIN_FID;
+      }
       this.FRONT_END = "https://bebellaboutique.com";
     });
     Object.setPrototypeOf(this, MongoDBConnection.prototype);

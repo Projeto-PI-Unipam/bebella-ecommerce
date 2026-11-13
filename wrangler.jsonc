@@ -22,53 +22,90 @@
 	},
 	"workers_dev": false,
 	"preview_urls": false,
-	"routes": [
-		{
-			"pattern": "bebellaboutique.com",
-			"custom_domain": true,
-			"enabled": true,
+	"env": {
+		"production": {
+			"vars": {
+				"CF_ENV": "production",
+			},
+			"migrations": [
+				{
+					"tag": "v1",
+					"new_sqlite_classes": [
+						"MongoDBConnection"
+					]
+				}
+			],
+			"routes": [
+				{
+					"pattern": "bebellaboutique.com",
+					"custom_domain": true,
+					"enabled": true,
+				}
+			],
+			"observability": {
+				"enabled": true
+			},
+			"upload_source_maps": true,
+			"secrets_store_secrets": [
+				{
+					"binding": "ADMIN_FID",
+					"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
+					"secret_name": "ADMIN_FID"
+				},
+				{
+					"binding": "DBPROD_URL",
+					"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
+					"secret_name": "DBPROD_URL"
+				},
+				{
+					"binding": "JWT_SEC",
+					"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
+					"secret_name": "JWT_SEC"
+				},
+				{
+					"binding": "MP_ACCESS",
+					"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
+					"secret_name": "MP_ACCESS"
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "MONGODB_CONNECTION",
+						"class_name": "MongoDBConnection"
+					}
+				]
+			},
+		},
+		"dev": {
+			"vars": {
+				"CF_ENV": "dev",
+			},
+			"secrets": {
+				"required": [
+					"JWT_SEC",
+					"DBPROD_URL",
+					"MP_ACCESS",
+					"ADMIN_FID"
+				],
+			},
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "MONGODB_CONNECTION",
+						"class_name": "MongoDBConnection"
+					}
+				]
+			},
+			"migrations": [
+				{
+					"tag": "v1",
+					"new_classes": [
+						"MongoDBConnection"
+					]
+				}
+			],
+			"routes": []
 		}
-	],
-	"observability": {
-		"enabled": true
 	},
-	"upload_source_maps": true,
-	"secrets_store_secrets": [
-		{
-			"binding": "ADMIN_FID",
-			"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
-			"secret_name": "ADMIN_FID"
-		},
-		{
-			"binding": "DBPROD_URL",
-			"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
-			"secret_name": "DBPROD_URL"
-		},
-		{
-			"binding": "JWT_SEC",
-			"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
-			"secret_name": "JWT_SEC"
-		},
-		{
-			"binding": "MP_ACCESS",
-			"store_id": "a10e7e42edd64e718f68e8a2df4cc123",
-			"secret_name": "MP_ACCESS"
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "MONGODB_CONNECTION",
-				"class_name": "MongoDBConnection"
-			}
-		]
-	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": [
-				"MongoDBConnection"
-			]
-		}
-	]
 }

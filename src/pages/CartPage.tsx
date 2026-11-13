@@ -3,7 +3,7 @@ import { TrashIcon } from "@phosphor-icons/react/dist/csr/Trash";
 import { TruckIcon } from "@phosphor-icons/react/dist/csr/Truck";
 import "./CartPage.css";
 import "../assets/fonts/fonts.css";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import type { CartItem, ClothesModel } from "../database/Schema.tsx";
 
 export default function CartPage({
@@ -27,7 +27,7 @@ export default function CartPage({
         },
         method: "POST",
         body: new URLSearchParams({
-          token: host || "",
+          token: host!,
         }),
       });
       if (res.ok) {
@@ -46,18 +46,24 @@ export default function CartPage({
   }, []);
 
   return (
-    <div className="carrinho-page">
+    <div className="font-[Prompt] text-neutral-800 bg-neutral-50 tracking-normal! text-left mb-20">
       <div className="carrinho-conteudo">
         <div>
           <div className="carrinho-faixa">
             <span>SACOLA DE COMPRAS</span>
-            <small>1 ITEM</small>
+            {cartItems && cartItems.length >= 1 && (
+              <small>
+                {`${cartItems.length.toString()} ${cartItems.length === 1 ? "ITEM" : "ITENS"}`}
+              </small>
+            )}
           </div>
 
           <div className="carrinho-item">
             <div className="carrinho-foto" />
             <div className="carrinho-detalhes">
-              <h1>Colete em crochê</h1>
+              <h1 className="tracking-wide! font-normal font-[Prompt] text-3xl! pb-">
+                Colete em crochê
+              </h1>
               <div className="carrinho-linha">
                 <span>Cor:</span>
                 <span>Branco</span>

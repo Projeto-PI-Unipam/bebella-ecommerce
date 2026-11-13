@@ -37,7 +37,7 @@ export default function OrdersPage({ host }: { host?: string }) {
         {orders?.map((order, index) => (
           <div
             key={order.date ? order.date.valueOf() : index}
-            className="lg:w-160 ml-8 lg:h-52 lg:min-h-52 min-h-40 h-40 lg:mr-12 bg-sky-100 flex flex-row items-center cursor-pointer transition hover:scale-102 duration-120 ease-out hover:bg-sky-200 rounded-2xl"
+            className="lg:w-xl ml-8 lg:h-52 lg:min-h-52 min-h-40 h-40 lg:mr-24 bg-sky-100 flex flex-row items-center cursor-pointer transition hover:scale-102 duration-120 ease-out hover:bg-sky-200 rounded-2xl"
             onClick={() =>
               selectedOrder === order ? selectOrder(null) : selectOrder(order)
             }
@@ -50,7 +50,7 @@ export default function OrdersPage({ host }: { host?: string }) {
               <span className="font-[Prompt] text-lg text-neutral-800 mt-4">
                 {"Pedido"}
               </span>
-              <span className="font-[Prompt] text-md text-neutral-800">
+              <span className="font-[Prompt] text-base text-neutral-800">
                 {`#${order._id!.toString().slice(0, 10)}`}
               </span>
               <span className="font-[Prompt] text-lg text-neutral-800 mt-25">
@@ -58,11 +58,24 @@ export default function OrdersPage({ host }: { host?: string }) {
                   order.products.reduce(
                     (acc, elem) => acc + elem.amount * elem.item.price,
                     0,
-                  ),
+                  ) + (order.address.cost || 0),
                 )}
               </span>
             </div>
-            <div className="w-full h-full flex flex-col"></div>
+            <div className="w-4/5 h-4/5 flex flex-col overflow-hidden gap-y-3">
+              {order.products.map((prod) => (
+                <div className="font-[Prompt] text-base text-neutral-600">
+                  <span>
+                    {prod.item.name +
+                      " (" +
+                      prod.size.toString() +
+                      ")" +
+                      " x" +
+                      prod.amount.toString()}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
