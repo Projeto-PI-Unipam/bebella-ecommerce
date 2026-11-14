@@ -305,7 +305,7 @@ export default function LoginPage({
               onClick={confirmarSenha}
               className="h-12 w-40 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] font-[Prompt] font-medium text-neutral-800 self-end"
             >
-              {"Confirmar".toLocaleUpperCase()}
+              {(isPending ? "..." : "Confirmar").toLocaleUpperCase()}
             </button>
           </div>
         )}

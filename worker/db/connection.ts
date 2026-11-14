@@ -1,7 +1,14 @@
 import { DurableObject } from "cloudflare:workers";
 import { genSaltSync, hashSync } from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { type Db, MongoClient, ObjectId, UUID } from "mongodb";
+import {
+  type Db,
+  MongoClient,
+  ObjectId,
+  UUID,
+  type PullOperator,
+  type Document,
+} from "mongodb";
 import type { ClothingData } from "../schema/items.ts";
 import type { SaleReview, WebSale } from "../schema/sales.ts";
 import type { TokenResponse, UserData } from "../schema/users.ts";
@@ -354,13 +361,45 @@ export class MongoDBConnection extends DurableObject<Env> {
       );
   }
 
-  async rm_cart(user_sid: string, item: string) {
-    const item_struct = JSON.parse(item);
+  async rm_cart(user_sid: string, item_sid: string) {
+    const item_struct = await this.db
+      .collection("items")
+      .findOne<ClothingData>({ _id: new ObjectId(item_sid) });
+    if (!item_struct) {
+      return;
+    }
     await this.db
       .collection("users")
-      .updateOne(
-        { _id: new ObjectId(user_sid) },
-        { $pull: { cart_products: item_struct } },
-      );
+      .updateOne({ _id: new ObjectId(user_sid) }, {
+        $pull: { cart_products: item_struct },
+      } as unknown as PullOperator<Document>);
+  }
+
+  async ch_cart(user_sid: string, item_sid: string, operation: string) {
+    if (!(operation === "increase" || operation === "decrease")) {
+      return;
+    }
+    const state = await this.db
+      .collection("users")
+      .findOne<UserData>({ _id: new ObjectId(user_sid) });
+    if (!state || !state.cart_products) {
+      return;
+    }
+    const current_item_index = state?.cart_products?.findIndex(
+      (p) => p._id?.toString() === item_sid,
+    );
+    if (current_item_index === -1) {
+      return;
+    }
+    if (operation === "increase") {
+      state!.cart_products![current_item_index].amount += 1;
+    }
+    if (operation === "decrease") {
+      state!.cart_products![current_item_index].amount -= 1;
+    }
+    await this.db
+      .collection("users")
+      .findOneAndReplace({ _id: new ObjectId() }, state);
+    console.log(state);
   }
 }

@@ -302,6 +302,36 @@ export default {
       }
     }
 
+    if (path === "/userapi/modcart" && req.method === "POST") {
+      try {
+        const data = await req.json<{
+          token: string;
+          operation: string;
+          item_sid: string;
+        }>();
+        const authed_data = JSON.parse(
+          (await db.auth_user(data.token.replace(/['"]/g, ""))) || "{}",
+        );
+        if (!authed_data || !authed_data.id) {
+          return new Response(
+            JSON.stringify(
+              "Usuário não autenticado ou com sessão expirada. Por favor, faça login novamente.",
+            ),
+            { status: 403 },
+          );
+        }
+        if (data.operation === "remove") {
+          await db.rm_cart(authed_data, data.item_sid);
+        } else {
+          await db.ch_cart(authed_data, data.item_sid, data.operation);
+        }
+        return new Response(null, { status: 204 });
+      } catch (err) {
+        console.error(err);
+        return new Response(JSON.stringify(err), { status: 503 });
+      }
+    }
+
     if (path === "/userapi/addcart" && req.method === "POST") {
       try {
         const body = await req.json<{ item: CartProd; token: string }>();

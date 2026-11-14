@@ -26,21 +26,6 @@
 	color: #737373;
 }
 
-.carrinho-item {
-	position: relative;
-	display: flex;
-	gap: 1.25rem;
-	padding: 2rem 0;
-	border-bottom: 1px solid #d4d4d4;
-}
-
-.carrinho-foto {
-	width: 8rem;
-	aspect-ratio: 4 / 5;
-	object-fit: cover;
-	background: #e5e5e5;
-}
-
 .carrinho-detalhes {
 	display: flex;
 	flex-direction: column;

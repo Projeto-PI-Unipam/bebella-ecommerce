@@ -148,6 +148,7 @@ export default function App() {
       }
     }
     getUser();
+    setPending(false);
     return;
   }, [
     location.href,
