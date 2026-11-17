@@ -86,7 +86,7 @@ function CardProduto({ item }: { item: ClothesModel }) {
             src={foto}
             alt={item.name}
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 motion-safe:hover:scale-[1.03]"
           />
         )}
         <SeloEstoque estoque={item.in_stock} />
@@ -148,7 +148,7 @@ export default function HomePage() {
   const [conteudo, setConteudo] = useState<HomeContent>(default_home_content);
 
   useEffect(() => {
-    async function getSelect(mod: string, done: boolean) {
+    async function getSelect(mod: "latest" | "selling") {
       const res = await fetch("/items/get", {
         headers: {
           "Content-Type": "application/json",
@@ -170,13 +170,11 @@ export default function HomePage() {
       } else {
         console.error(res);
       }
-      if (done) {
-        return;
-      } else {
-        return await getSelect("selling", true);
-      }
     }
-    getSelect("latest", false).finally(() => setCarregando(false));
+    // Novidades e mais vendidos são pedidos juntos, não um depois do outro.
+    Promise.all([getSelect("latest"), getSelect("selling")])
+      .catch((err) => console.error(err))
+      .finally(() => setCarregando(false));
   }, []);
 
   useEffect(() => {
@@ -236,6 +234,7 @@ export default function HomePage() {
               <img
                 src={fotoCampanha}
                 alt={conteudo.campaign.title}
+                fetchPriority="high"
                 className="absolute inset-0 h-full w-full object-cover object-[50%_8%]"
               />
             ) : (
@@ -272,7 +271,7 @@ export default function HomePage() {
                     src={c.foto}
                     alt=""
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover object-[50%_30%] transition-transform duration-300 group-hover:scale-[1.03]"
+                    className="absolute inset-0 h-full w-full object-cover object-[50%_30%] transition-transform duration-300 motion-safe:group-hover:scale-[1.03]"
                   />
                 )}
                 <span className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-black/45"></span>
@@ -327,13 +326,16 @@ export default function HomePage() {
         <div className="mt-3 flex w-full max-w-[520px] flex-col gap-2.5 md:flex-row">
           <input
             type="email"
+            name="email"
+            autoComplete="email"
+            spellCheck={false}
             aria-label="Seu e-mail"
             placeholder="Seu melhor e-mail"
-            className="h-12 flex-1 rounded-full border border-[#e3c9c4] bg-white px-5 text-[15px] text-neutral-800 outline-none"
+            className="h-12 flex-1 rounded-full border border-[#e3c9c4] bg-white px-5 text-[15px] text-neutral-800 outline-none focus-visible:border-[#98263e] focus-visible:ring-2 focus-visible:ring-[#98263e]/15"
           />
           <button
             type="button"
-            className="h-12 cursor-pointer rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800"
+            className="h-12 cursor-pointer rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800 hover:bg-[#f2aeb0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#98263e]"
           >
             CADASTRAR
           </button>
