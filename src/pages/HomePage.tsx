@@ -4,7 +4,7 @@ import "../assets/fonts/fonts.css";
 import { useEffect, useState } from "react";
 
 interface ConteudoHome {
-  beneficios: string[];
+  beneficios: { destaque: string; texto: string }[];
   campanha: {
     selo: string;
     titulo: string;
@@ -18,10 +18,10 @@ interface ConteudoHome {
 
 const conteudoProvisorio: ConteudoHome = {
   beneficios: [
-    "Frete grátis acima de R$ 299 para todo o Brasil",
-    "5% OFF no Pix",
-    "Até 6x sem juros no cartão de crédito",
-    "Primeira troca grátis em 30 dias",
+    { destaque: "Frete grátis", texto: "acima de R$ 299" },
+    { destaque: "5% OFF", texto: "no Pix" },
+    { destaque: "Até 6x sem juros", texto: "no cartão" },
+    { destaque: "Troca grátis", texto: "em 30 dias" },
   ],
   campanha: {
     selo: "EM ESPERA",
@@ -145,11 +145,14 @@ export default function HomePage() {
 
   return (
     <div className="flex w-full flex-col bg-white text-left font-[Prompt] text-neutral-800">
-      <div className="bg-[#fdf1ee] px-4 py-2.5 text-[13px] text-[#4a4542]">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-1 text-center">
+      <div className="bg-[#fdf1ee] px-4 py-3 text-[13px] text-[#2b2b2b] md:text-sm">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-1 text-center">
           {conteudo.beneficios.map((b, i) => (
             <span key={i} className={i > 1 ? "hidden md:inline" : ""}>
-              {b}
+              <strong className="font-bold text-[#98263e]">
+                {b.destaque}
+              </strong>{" "}
+              {b.texto}
             </span>
           ))}
         </div>
