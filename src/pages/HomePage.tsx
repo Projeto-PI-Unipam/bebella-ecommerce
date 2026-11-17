@@ -1,54 +1,94 @@
-import { ObjectId } from "bson";
 import patternBg from "../assets/img/pattern_cut.png";
-import testProduct from "../assets/img/teste1.png";
-import testProduct2 from "../assets/img/teste2.png";
-import ProductCard from "../components/ProductCard.tsx";
-import { type ClothesModel, type size, sizes } from "../database/Schema.tsx";
+import { bucket, type ClothesModel, to_currency } from "../database/Schema.tsx";
 import "../assets/fonts/fonts.css";
 import { useEffect, useState } from "react";
 
-function produtoTeste(nome: string, preco: number, foto: string): ClothesModel {
-  return {
-    db_id: new ObjectId().toString(),
-    name: nome,
-    brand: "Bebella",
-    category: "Primavera",
-    size_data: sizes as size[],
-    description: "Produto de teste",
-    in_stock: 5,
-    pic_url: [foto],
-    price: preco,
-    dimensions: [30, 20, 5],
-    weight: 0.3,
+interface ConteudoHome {
+  beneficios: string[];
+  campanha: {
+    selo: string;
+    titulo: string;
+    texto: string;
+    botao: string;
+    imagem: string | null;
   };
+  banner: { titulo: string; texto: string; botao: string };
+  newsletter: { titulo: string; texto: string };
 }
 
-const novidades = [
-  produtoTeste("Vestido em linho", 350.99, testProduct),
-  produtoTeste("Vestido nude", 200.0, testProduct2),
-  produtoTeste("Conjunto linho", 260.0, testProduct),
-  produtoTeste("Blusa ombro a ombro", 149.9, testProduct2),
-];
+const conteudoProvisorio: ConteudoHome = {
+  beneficios: ["Em espera", "Em espera", "Em espera", "Em espera"],
+  campanha: {
+    selo: "EM ESPERA",
+    titulo: "Em espera",
+    texto: "Em espera",
+    botao: "EM ESPERA",
+    imagem: null,
+  },
+  banner: { titulo: "Em espera", texto: "Em espera", botao: "EM ESPERA" },
+  newsletter: { titulo: "Em espera", texto: "Em espera" },
+};
 
-const maisVendidos = [
-  produtoTeste("Conjunto linho", 200.0, testProduct2),
-  produtoTeste("Colete em crochê", 350.99, testProduct),
-  produtoTeste("Conjunto rosa", 229.9, testProduct2),
-  produtoTeste("Camisa malha canelada", 189.9, testProduct),
-];
+function idDoProduto(p: ClothesModel) {
+  return p.db_id || String(p._id);
+}
 
-const beneficios = [
-  ["Frete grátis", "acima de R$ 299 para todo o Brasil"],
-  ["5% OFF no Pix", "desconto direto no pagamento"],
-  ["Até 6x sem juros", "no cartão de crédito"],
-  ["Troca fácil", "primeira troca grátis em 30 dias"],
-];
+function fotoDoProduto(p: ClothesModel) {
+  const foto = p.pic_url?.[0];
+  return foto ? `${bucket}/${foto}` : undefined;
+}
 
-const categorias = ["Conjuntos", "Blazer", "Vestidos", "Blusas"];
+function CardProduto({ item }: { item: ClothesModel }) {
+  const foto = fotoDoProduto(item);
+  return (
+    <a
+      href={"/product/" + idDoProduto(item)}
+      className="flex min-w-0 flex-col gap-3 text-neutral-800! no-underline"
+    >
+      <span className="relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed]">
+        {foto && (
+          <img
+            src={foto}
+            alt={item.name}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="text-[15px] leading-snug">{item.name}</span>
+        <span className="text-base font-medium">{to_currency(item.price)}</span>
+        <span className="text-[13px] text-[#6b6461]">
+          6x de {to_currency(item.price / 6)} sem juros
+        </span>
+      </span>
+    </a>
+  );
+}
+
+function TituloSecao({ titulo }: { titulo: string }) {
+  return (
+    <div className="mb-6 flex items-baseline justify-between gap-4">
+      <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-wide! text-neutral-800! md:text-2xl!">
+        {titulo}
+      </h2>
+    </div>
+  );
+}
+
+function GradeProdutos({ itens }: { itens: ClothesModel[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-6">
+      {itens.map((p) => (
+        <CardProduto key={idDoProduto(p)} item={p} />
+      ))}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const [newHighlights, setNewHl] = useState<ClothesModel[]>([]);
   const [mostSoldHl, setSoldHl] = useState<ClothesModel[]>([]);
+  const conteudo = conteudoProvisorio;
 
   useEffect(() => {
     async function getSelect(mod: string, done: boolean) {
@@ -82,169 +122,150 @@ export default function HomePage() {
     getSelect("latest", false);
   }, []);
 
+  const categorias: { nome: string; foto?: string }[] = [];
+  for (const p of [...newHighlights, ...mostSoldHl]) {
+    if (p.category && !categorias.some((c) => c.nome === p.category)) {
+      categorias.push({ nome: p.category, foto: fotoDoProduto(p) });
+    }
+  }
+
   return (
-    <div className="w-full flex flex-col bg-white font-[Prompt] text-neutral-800">
-      <section className="relative w-full h-105 flex flex-row overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${patternBg})`,
-            backgroundRepeat: "repeat",
-            backgroundSize: "260px auto",
-          }}
-        ></div>
-
-        <div className="relative z-10 flex w-3/3 flex-col justify-center pl-16">
-          <span className="text-sm tracking-[0.2em] text-neutral-600">
-            {"Coleção Primavera 2026".toUpperCase()}
-          </span>
-          <h1 className="mt-4 text-6xl font-light leading-[1.1] text-neutral-800">
-            Leveza que
-            <br />
-            floresce
-          </h1>
-          <p className="mt-6 text-base text-neutral-700">
-            Crochê, linho e tons delicados para a estação mais leve do ano.
-          </p>
-          <div className="mt-8 flex flex-row gap-4">
-            <button
-              type="button"
-              className="h-12 rounded-full bg-[#f6bebf] px-8 text-sm font-medium tracking-wide text-neutral-800"
-            >
-              {"Ver coleção".toUpperCase()}
-            </button>
-            <button
-              type="button"
-              className="h-12 rounded-full border-2 border-neutral-300 bg-white px-8 text-sm font-medium tracking-wide text-neutral-800"
-            >
-              {"Ver ofertas".toUpperCase()}
-            </button>
-          </div>
-        </div>
-
-        {false && (
-          <div className="relative z-10 flex w-1/3 items-center justify-center bg-[#e8d9cc] text-sm text-neutral-600">
-            imagem da campanha
-          </div>
-        )}
-      </section>
-
-      <section className="flex w-full flex-row items-center justify-evenly bg-[#fdf1ee] py-6">
-        {beneficios.map((b) => (
-          <div
-            key={b[0]}
-            className="flex flex-1 flex-col items-center border-r border-[#f0d9d4] px-4 text-center last:border-r-0"
-          >
-            <span className="text-sm font-medium text-neutral-800">{b[0]}</span>
-            <span className="mt-1 text-xs text-neutral-600">{b[1]}</span>
-          </div>
-        ))}
-      </section>
-
-      <section className="w-full px-16 pt-16">
-        <div className="flex flex-row items-end justify-between">
-          <h2 className="text-2xl font-normal tracking-[0.1em] text-neutral-800">
-            {"Novidades".toUpperCase()}
-          </h2>
-          <span className="cursor-pointer text-sm text-[#d89a9c] hover:text-[#98263e]">
-            {"Ver tudo".toUpperCase()}
-          </span>
-        </div>
-        <div className="mt-8 flex flex-row gap-8 overflow-x-auto pb-4">
-          {newHighlights.map((p) => (
-            <ProductCard key={p.db_id} item={p} />
+    <div className="flex w-full flex-col bg-white text-left font-[Prompt] text-neutral-800">
+      <div className="bg-[#fdf1ee] px-4 py-2.5 text-[13px] text-[#4a4542]">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-1 text-center">
+          {conteudo.beneficios.map((b, i) => (
+            <span key={i} className={i > 1 ? "hidden md:inline" : ""}>
+              {b}
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="w-full px-16 pt-16">
-        <div className="flex flex-row items-end justify-between">
-          <h2 className="text-2xl font-normal tracking-[0.1em] text-neutral-800">
-            {"Compre por categoria".toUpperCase()}
-          </h2>
-          <span className="cursor-pointer text-sm text-[#d89a9c] hover:text-[#98263e]">
-            {"Ver todas".toUpperCase()}
-          </span>
-        </div>
-        <div className="mt-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
-          {categorias.map((c) => (
-            <div
-              key={c}
-              className="flex h-56 cursor-pointer flex-col justify-end overflow-hidden rounded-lg"
-              style={{
-                backgroundImage: `url(${patternBg})`,
-                backgroundRepeat: "repeat",
-                backgroundSize: "140px auto",
-              }}
-              onClick={() =>
-                location.assign(
-                  location.origin + "/category?q=" + c.toLocaleLowerCase(),
-                )
-              }
-            >
-              <div className="flex flex-row items-center justify-between bg-[#f6bebf] px-4 py-3">
-                <span className="text-sm font-medium tracking-wide text-neutral-800">
-                  {c.toUpperCase()}
-                </span>
-                <span className="text-xs text-neutral-700">Ver produtos →</span>
-              </div>
+      <section className="mx-auto w-full max-w-7xl md:px-10 md:pt-8">
+        <div className="flex flex-col-reverse overflow-hidden bg-[#f8eeeb] md:min-h-[520px] md:flex-row md:rounded-md">
+          <div className="flex flex-col items-start justify-center gap-4 px-4 py-8 md:w-1/2 md:px-14 md:py-14">
+            <span className="text-xs tracking-[0.12em] text-[#6b3a44] md:text-[13px]">
+              {conteudo.campanha.selo}
+            </span>
+            <h1 className="m-0! font-[Prompt]! text-4xl! leading-tight! font-medium! tracking-normal! text-neutral-800! md:text-5xl!">
+              {conteudo.campanha.titulo}
+            </h1>
+            <p className="max-w-[400px] text-[15px] leading-relaxed text-[#4a4542] md:text-[17px]">
+              {conteudo.campanha.texto}
+            </p>
+            <div className="mt-2 flex w-full flex-wrap items-center gap-6 md:w-auto">
+              <a
+                href="#novidades"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline md:w-auto"
+              >
+                {conteudo.campanha.botao}
+              </a>
             </div>
-          ))}
+          </div>
+          <div className="relative h-[420px] md:h-auto md:w-1/2">
+            {conteudo.campanha.imagem ? (
+              <img
+                src={conteudo.campanha.imagem}
+                alt={conteudo.campanha.titulo}
+                className="absolute inset-0 h-full w-full object-cover object-[55%_20%]"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#e8d9cc] px-6 text-center text-sm text-[#6b6461]">
+                Em espera
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <section className="mt-16 flex w-full flex-row items-center justify-between bg-[#f8cdd0] px-16 py-12">
-        <div className="flex flex-col">
-          <h2 className="text-3xl font-normal text-neutral-800">
-            5% OFF no Pix em toda a loja
-          </h2>
-          <p className="mt-3 text-sm text-neutral-700">
-            O desconto já aparece no pagamento. Parcele no cartão em até 4x sem
-            juros.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="h-12 rounded-full border-2 border-neutral-300 bg-white px-10 text-sm font-medium tracking-wide text-neutral-800"
+      {newHighlights.length > 0 && (
+        <section
+          id="novidades"
+          className="mx-auto w-full max-w-7xl px-4 pt-12 md:px-10 md:pt-20"
         >
-          {"Aproveitar".toUpperCase()}
-        </button>
+          <TituloSecao titulo="NOVIDADES" />
+          <GradeProdutos itens={newHighlights} />
+        </section>
+      )}
+
+      {categorias.length > 0 && (
+        <section className="mx-auto w-full max-w-7xl px-4 pt-12 md:px-10 md:pt-20">
+          <TituloSecao titulo="COMPRE POR CATEGORIA" />
+          <div className="grid grid-cols-3 gap-2 md:gap-6">
+            {categorias.slice(0, 3).map((c) => (
+              <a
+                key={c.nome}
+                href={"/category?q=" + c.nome.toLocaleLowerCase()}
+                className="relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed] text-white! no-underline"
+              >
+                {c.foto && (
+                  <img
+                    src={c.foto}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover object-[50%_30%]"
+                  />
+                )}
+                <span className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-black/45"></span>
+                <span className="absolute bottom-2 left-2 text-xs font-medium tracking-wide md:bottom-5 md:left-5 md:text-base">
+                  {c.nome.toUpperCase()}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="relative mt-12 overflow-hidden bg-[#f6bebf] md:mt-20">
+        <img
+          src={patternBg}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 -right-10 w-52 -translate-y-1/2 opacity-20 md:right-0 md:w-90"
+        />
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-10 md:py-11">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xl font-medium md:text-[26px]">
+              {conteudo.banner.titulo}
+            </span>
+            <span className="text-sm text-[#4a4542] md:text-[15px]">
+              {conteudo.banner.texto}
+            </span>
+          </div>
+          <a
+            href="/ofertas"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline"
+          >
+            {conteudo.banner.botao}
+          </a>
+        </div>
       </section>
 
-      <section className="w-full px-16 pt-16">
-        <div className="flex flex-row items-end justify-between">
-          <h2 className="text-2xl font-normal tracking-[0.1em] text-neutral-800">
-            {"Mais vendidos".toUpperCase()}
-          </h2>
-          <span className="cursor-pointer text-sm text-[#d89a9c] hover:text-[#98263e]">
-            {"Ver tudo".toUpperCase()}
-          </span>
-        </div>
-        <div className="mt-8 flex flex-row gap-8 overflow-x-auto pb-4">
-          {mostSoldHl.map((p) => (
-            <ProductCard key={p.db_id} item={p} />
-          ))}
-        </div>
-      </section>
+      {mostSoldHl.length > 0 && (
+        <section className="mx-auto w-full max-w-7xl px-4 pt-12 md:px-10 md:pt-20">
+          <TituloSecao titulo="MAIS VENDIDOS" />
+          <GradeProdutos itens={mostSoldHl} />
+        </section>
+      )}
 
-      <section className="flex w-full flex-col items-center px-16 py-20">
-        <h2 className="text-3xl font-normal text-neutral-800">
-          Ganhe 10% OFF na primeira compra
+      <section className="mx-auto flex w-full max-w-7xl flex-col items-center gap-2.5 px-4 py-14 text-center md:py-24">
+        <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-normal! text-neutral-800! md:text-2xl!">
+          {conteudo.newsletter.titulo}
         </h2>
-        <p className="mt-3 text-sm text-neutral-700">
-          Cadastre seu e-mail e receba novidades e ofertas antes de todo mundo.
+        <p className="text-sm text-[#6b6461] md:text-[15px]">
+          {conteudo.newsletter.texto}
         </p>
-        <div className="mt-8 flex flex-row gap-4">
+        <div className="mt-3 flex w-full max-w-[520px] flex-col gap-2.5 md:flex-row">
           <input
             type="email"
+            aria-label="Seu e-mail"
             placeholder="Seu melhor e-mail"
-            className="h-12 w-80 rounded-full border border-[#f6bebf] bg-white px-5 text-sm text-neutral-800 outline-none"
+            className="h-12 flex-1 rounded-full border border-[#e3c9c4] bg-white px-5 text-[15px] text-neutral-800 outline-none"
           />
           <button
             type="button"
-            className="h-12 rounded-full bg-[#f6bebf] px-8 text-sm font-medium tracking-wide text-neutral-800"
+            className="h-12 cursor-pointer rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800"
           >
-            {"Cadastrar".toUpperCase()}
+            CADASTRAR
           </button>
         </div>
       </section>
