@@ -1,7 +1,9 @@
 import type { ObjectId } from "bson";
 import {
   createContext,
+  lazy,
   type ReactNode,
+  Suspense,
   useEffect,
   useReducer,
   useState,
@@ -19,6 +21,8 @@ import OrdersPage from "./pages/OrdersPage.tsx";
 import ProductPage from "./pages/ProductPage.tsx";
 //import ClothesList from "./components/ClothesList.tsx";
 import SearchPage from "./pages/SearchPage.tsx";
+// O painel só é baixado quando alguém abre /painel.
+const AdminPage = lazy(() => import("./pages/AdminPage.tsx"));
 import { type ClothesModel } from "./database/Schema.tsx";
 
 export interface UserModel {
@@ -162,12 +166,19 @@ export default function App() {
     ["/cart", <CartPage host={userToken as string} putState={putState} />],
     ["/orders", <OrdersPage host={userToken as string} />],
     ["/admin/items", <ItemHandler host={userToken as string} />],
+    [
+      "/painel/*",
+      <Suspense fallback={<p className="p-10">Carregando painel…</p>}>
+        <AdminPage host={userToken} />
+      </Suspense>,
+    ],
   ];
 
   return (
     <div className="max-w-dvw overflow-x-clip">
       <AuthContext value={userState}>
-        {!location.pathname.includes("login") && <Topbar host={userToken} />}
+        {!location.pathname.includes("login") &&
+          !location.pathname.startsWith("/painel") && <Topbar host={userToken} />}
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -220,7 +231,8 @@ export default function App() {
               ))}
           </Routes>
         </BrowserRouter>
-        {!location.pathname.includes("login") && <Footer />}
+        {!location.pathname.includes("login") &&
+          !location.pathname.startsWith("/painel") && <Footer />}
       </AuthContext>
     </div>
   );
