@@ -17,7 +17,12 @@ interface ConteudoHome {
 }
 
 const conteudoProvisorio: ConteudoHome = {
-  beneficios: ["Em espera", "Em espera", "Em espera", "Em espera"],
+  beneficios: [
+    "Frete grátis acima de R$ 299 para todo o Brasil",
+    "5% OFF no Pix",
+    "Até 6x sem juros no cartão de crédito",
+    "Primeira troca grátis em 30 dias",
+  ],
   campanha: {
     selo: "EM ESPERA",
     titulo: "Em espera",
@@ -25,8 +30,17 @@ const conteudoProvisorio: ConteudoHome = {
     botao: "EM ESPERA",
     imagem: null,
   },
-  banner: { titulo: "Em espera", texto: "Em espera", botao: "EM ESPERA" },
-  newsletter: { titulo: "Em espera", texto: "Em espera" },
+  banner: {
+    titulo: "5% OFF no Pix em toda a loja",
+    texto:
+      "O desconto já aparece no pagamento. Parcele no cartão em até 6x sem juros.",
+    botao: "APROVEITAR",
+  },
+  newsletter: {
+    titulo: "Ganhe 10% OFF na primeira compra",
+    texto:
+      "Cadastre seu e-mail e receba novidades e ofertas antes de todo mundo.",
+  },
 };
 
 function idDoProduto(p: ClothesModel) {
