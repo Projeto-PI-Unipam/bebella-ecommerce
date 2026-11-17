@@ -1,59 +1,80 @@
 import patternBg from "../assets/img/pattern_cut.png";
-import { bucket, type ClothesModel, to_currency } from "../database/Schema.tsx";
+import {
+  bucket,
+  type ClothesModel,
+  to_currency,
+} from "../database/Schema.tsx";
 import "../assets/fonts/fonts.css";
 import { useEffect, useState } from "react";
 
-interface ConteudoHome {
-  beneficios: { destaque: string; texto: string }[];
-  campanha: {
-    selo: string;
-    titulo: string;
-    texto: string;
-    botao: string;
-    imagem: string | null;
+// Conteúdo da home (campanha, benefícios, banner e newsletter).
+// Esses textos aparecem enquanto o painel não publica nada em /items/home.
+interface HomeContent {
+  show_campaign: boolean;
+  campaign: {
+    tag: string;
+    title: string;
+    text: string;
+    button: string;
+    link: string;
+    image: string;
   };
-  banner: { titulo: string; texto: string; botao: string };
-  newsletter: { titulo: string; texto: string };
+  benefits: { highlight: string; text: string }[];
+  banner: { title: string; text: string; button: string; link: string };
+  newsletter: { title: string; text: string };
 }
 
-const conteudoProvisorio: ConteudoHome = {
-  beneficios: [
-    { destaque: "Frete grátis", texto: "acima de R$ 299" },
-    { destaque: "5% OFF", texto: "no Pix" },
-    { destaque: "Até 6x sem juros", texto: "no cartão" },
-    { destaque: "Troca grátis", texto: "em 30 dias" },
-  ],
-  campanha: {
-    selo: "EM ESPERA",
-    titulo: "Em espera",
-    texto: "Em espera",
-    botao: "EM ESPERA",
-    imagem: null,
+const default_home_content: HomeContent = {
+  show_campaign: true,
+  campaign: {
+    tag: "EM ESPERA",
+    title: "Em espera",
+    text: "Em espera",
+    button: "EM ESPERA",
+    link: "",
+    image: "",
   },
+  benefits: [
+    { highlight: "Frete grátis", text: "acima de R$ 299" },
+    { highlight: "5% OFF", text: "no Pix" },
+    { highlight: "Até 6x sem juros", text: "no cartão" },
+    { highlight: "Troca grátis", text: "em 30 dias" },
+  ],
   banner: {
-    titulo: "5% OFF no Pix em toda a loja",
-    texto:
-      "O desconto já aparece no pagamento. Parcele no cartão em até 6x sem juros.",
-    botao: "APROVEITAR",
+    title: "5% OFF no Pix em toda a loja",
+    text: "O desconto já aparece no pagamento. Parcele no cartão em até 6x sem juros.",
+    button: "APROVEITAR",
+    link: "",
   },
   newsletter: {
-    titulo: "Ganhe 10% OFF na primeira compra",
-    texto:
-      "Cadastre seu e-mail e receba novidades e ofertas antes de todo mundo.",
+    title: "Ganhe 10% OFF na primeira compra",
+    text: "Cadastre seu e-mail e receba novidades e ofertas antes de todo mundo.",
   },
 };
+
+const pix_discount = 0.05;
+
+function image_url(name?: string): string | undefined {
+  if (!name) return undefined;
+  if (/^(https?:|blob:|data:|\/)/.test(name)) return name;
+  return `${bucket}/${name}`;
+}
 
 function idDoProduto(p: ClothesModel) {
   return p.db_id || String(p._id);
 }
 
-function fotoDoProduto(p: ClothesModel) {
-  const foto = p.pic_url?.[0];
-  return foto ? `${bucket}/${foto}` : undefined;
+function SeloEstoque({ estoque }: { estoque: number }) {
+  if (estoque > 3) return null;
+  return (
+    <span className="absolute top-2 left-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-[#98263e]">
+      {estoque === 0 ? "Esgotado" : "Últimas unidades"}
+    </span>
+  );
 }
 
 function CardProduto({ item }: { item: ClothesModel }) {
-  const foto = fotoDoProduto(item);
+  const foto = image_url(item.pic_url?.[0]);
   return (
     <a
       href={"/product/" + idDoProduto(item)}
@@ -64,18 +85,33 @@ function CardProduto({ item }: { item: ClothesModel }) {
           <img
             src={foto}
             alt={item.name}
-            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
           />
         )}
+        <SeloEstoque estoque={item.in_stock} />
       </span>
       <span className="flex flex-col gap-1">
         <span className="text-[15px] leading-snug">{item.name}</span>
         <span className="text-base font-medium">{to_currency(item.price)}</span>
+        <span className="text-[13px] font-medium text-[#98263e]">
+          {to_currency(item.price * (1 - pix_discount))} no Pix
+        </span>
         <span className="text-[13px] text-[#6b6461]">
-          6x de {to_currency(item.price / 6)} sem juros
+          ou 6x de {to_currency(item.price / 6)} sem juros
         </span>
       </span>
     </a>
+  );
+}
+
+function CardEsqueleto() {
+  return (
+    <div className="flex min-w-0 flex-col gap-3" aria-hidden="true">
+      <span className="block aspect-3/4 animate-pulse rounded-md bg-[#f4efed]"></span>
+      <span className="h-4 w-3/4 animate-pulse rounded bg-[#f4efed]"></span>
+      <span className="h-4 w-1/3 animate-pulse rounded bg-[#f4efed]"></span>
+    </div>
   );
 }
 
@@ -89,12 +125,18 @@ function TituloSecao({ titulo }: { titulo: string }) {
   );
 }
 
-function GradeProdutos({ itens }: { itens: ClothesModel[] }) {
+function GradeProdutos({
+  itens,
+  carregando,
+}: {
+  itens: ClothesModel[];
+  carregando: boolean;
+}) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-6">
-      {itens.map((p) => (
-        <CardProduto key={idDoProduto(p)} item={p} />
-      ))}
+      {carregando
+        ? [0, 1, 2, 3].map((i) => <CardEsqueleto key={i} />)
+        : itens.map((p) => <CardProduto key={idDoProduto(p)} item={p} />)}
     </div>
   );
 }
@@ -102,7 +144,8 @@ function GradeProdutos({ itens }: { itens: ClothesModel[] }) {
 export default function HomePage() {
   const [newHighlights, setNewHl] = useState<ClothesModel[]>([]);
   const [mostSoldHl, setSoldHl] = useState<ClothesModel[]>([]);
-  const conteudo = conteudoProvisorio;
+  const [carregando, setCarregando] = useState<boolean>(true);
+  const [conteudo, setConteudo] = useState<HomeContent>(default_home_content);
 
   useEffect(() => {
     async function getSelect(mod: string, done: boolean) {
@@ -133,58 +176,67 @@ export default function HomePage() {
         return await getSelect("selling", true);
       }
     }
-    getSelect("latest", false);
+    getSelect("latest", false).finally(() => setCarregando(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/items/home")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((dados: HomeContent | null) => {
+        if (dados) setConteudo(dados);
+      })
+      .catch((err) => console.error(err));
   }, []);
 
   const categorias: { nome: string; foto?: string }[] = [];
   for (const p of [...newHighlights, ...mostSoldHl]) {
     if (p.category && !categorias.some((c) => c.nome === p.category)) {
-      categorias.push({ nome: p.category, foto: fotoDoProduto(p) });
+      categorias.push({ nome: p.category, foto: image_url(p.pic_url?.[0]) });
     }
   }
+
+  const fotoCampanha = image_url(conteudo.campaign.image);
 
   return (
     <div className="flex w-full flex-col bg-white text-left font-[Prompt] text-neutral-800">
       <div className="bg-[#fdf1ee] px-4 py-3 text-[13px] text-[#2b2b2b] md:text-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-1 text-center">
-          {conteudo.beneficios.map((b, i) => (
+          {conteudo.benefits.map((b, i) => (
             <span key={i} className={i > 1 ? "hidden md:inline" : ""}>
               <strong className="font-bold text-[#98263e]">
-                {b.destaque}
+                {b.highlight}
               </strong>{" "}
-              {b.texto}
+              {b.text}
             </span>
           ))}
         </div>
       </div>
 
-      <section className="mx-auto w-full max-w-7xl md:px-10 md:pt-8">
-        <div className="flex flex-col-reverse overflow-hidden bg-[#f8eeeb] md:min-h-[520px] md:flex-row md:rounded-md">
-          <div className="flex flex-col items-start justify-center gap-4 px-4 py-8 md:w-1/2 md:px-14 md:py-14">
+      {conteudo.show_campaign && (
+        <section className="flex w-full flex-col bg-[#f8eeeb] md:h-[440px] md:flex-row">
+          <div className="flex flex-col items-start justify-center gap-3.5 px-4 py-7 md:w-[38%] md:px-12 md:py-10 lg:px-16">
             <span className="text-xs tracking-[0.12em] text-[#6b3a44] md:text-[13px]">
-              {conteudo.campanha.selo}
+              {conteudo.campaign.tag}
             </span>
-            <h1 className="m-0! font-[Prompt]! text-4xl! leading-tight! font-medium! tracking-normal! text-neutral-800! md:text-5xl!">
-              {conteudo.campanha.titulo}
+            <h1 className="m-0! font-[Prompt]! text-3xl! leading-tight! font-medium! tracking-normal! text-neutral-800! md:text-[40px]!">
+              {conteudo.campaign.title}
             </h1>
-            <p className="max-w-[400px] text-[15px] leading-relaxed text-[#4a4542] md:text-[17px]">
-              {conteudo.campanha.texto}
+            <p className="max-w-[360px] text-[15px] leading-relaxed text-[#4a4542]">
+              {conteudo.campaign.text}
             </p>
-            <div className="mt-2 flex w-full flex-wrap items-center gap-6 md:w-auto">
-              <a
-                href="#novidades"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline md:w-auto"
-              >
-                {conteudo.campanha.botao}
-              </a>
-            </div>
+            <a
+              href={conteudo.campaign.link || "#novidades"}
+              className="mt-1 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline md:w-auto"
+            >
+              {conteudo.campaign.button}
+            </a>
           </div>
-          <div className="relative h-[420px] md:h-auto md:w-1/2">
-            {conteudo.campanha.imagem ? (
+          <div className="relative order-first h-[340px] md:order-none md:h-full md:w-[62%]">
+            {fotoCampanha ? (
               <img
-                src={conteudo.campanha.imagem}
-                alt={conteudo.campanha.titulo}
-                className="absolute inset-0 h-full w-full object-cover object-[55%_20%]"
+                src={fotoCampanha}
+                alt={conteudo.campaign.title}
+                className="absolute inset-0 h-full w-full object-cover object-[50%_8%]"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-[#e8d9cc] px-6 text-center text-sm text-[#6b6461]">
@@ -192,16 +244,16 @@ export default function HomePage() {
               </div>
             )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {newHighlights.length > 0 && (
+      {(carregando || newHighlights.length > 0) && (
         <section
           id="novidades"
           className="mx-auto w-full max-w-7xl px-4 pt-12 md:px-10 md:pt-20"
         >
           <TituloSecao titulo="NOVIDADES" />
-          <GradeProdutos itens={newHighlights} />
+          <GradeProdutos itens={newHighlights} carregando={carregando} />
         </section>
       )}
 
@@ -213,13 +265,14 @@ export default function HomePage() {
               <a
                 key={c.nome}
                 href={"/category?q=" + c.nome.toLocaleLowerCase()}
-                className="relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed] text-white! no-underline"
+                className="group relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed] text-white! no-underline"
               >
                 {c.foto && (
                   <img
                     src={c.foto}
                     alt=""
-                    className="absolute inset-0 h-full w-full object-cover object-[50%_30%]"
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover object-[50%_30%] transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                 )}
                 <span className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-black/45"></span>
@@ -242,34 +295,34 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-10 md:py-11">
           <div className="flex flex-col gap-1.5">
             <span className="text-xl font-medium md:text-[26px]">
-              {conteudo.banner.titulo}
+              {conteudo.banner.title}
             </span>
             <span className="text-sm text-[#4a4542] md:text-[15px]">
-              {conteudo.banner.texto}
+              {conteudo.banner.text}
             </span>
           </div>
           <a
-            href="/ofertas"
+            href={conteudo.banner.link || "#novidades"}
             className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline"
           >
-            {conteudo.banner.botao}
+            {conteudo.banner.button}
           </a>
         </div>
       </section>
 
-      {mostSoldHl.length > 0 && (
+      {(carregando || mostSoldHl.length > 0) && (
         <section className="mx-auto w-full max-w-7xl px-4 pt-12 md:px-10 md:pt-20">
           <TituloSecao titulo="MAIS VENDIDOS" />
-          <GradeProdutos itens={mostSoldHl} />
+          <GradeProdutos itens={mostSoldHl} carregando={carregando} />
         </section>
       )}
 
       <section className="mx-auto flex w-full max-w-7xl flex-col items-center gap-2.5 px-4 py-14 text-center md:py-24">
         <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-normal! text-neutral-800! md:text-2xl!">
-          {conteudo.newsletter.titulo}
+          {conteudo.newsletter.title}
         </h2>
         <p className="text-sm text-[#6b6461] md:text-[15px]">
-          {conteudo.newsletter.texto}
+          {conteudo.newsletter.text}
         </p>
         <div className="mt-3 flex w-full max-w-[520px] flex-col gap-2.5 md:flex-row">
           <input
