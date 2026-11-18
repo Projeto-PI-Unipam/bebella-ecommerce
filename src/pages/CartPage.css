@@ -4,13 +4,8 @@
 }
 
 .carrinho-conteudo {
-	display: grid;
-	grid-template-columns: 1fr 17rem;
-	gap: 6rem;
-	align-items: start;
-	max-width: 72rem;
-	margin: 3rem auto 0;
-	padding: 0 1.5rem;
+	/*grid-template-columns: 1fr 17rem;*/
+	/*margin: 3rem auto 0;*/
 }
 
 .carrinho-faixa {
@@ -76,7 +71,6 @@
 }
 
 .carrinho-frete {
-	display: grid;
 	grid-template-columns: 1fr 1fr;
 	margin-top: 2rem;
 	border: 1px solid #e5e5e5;

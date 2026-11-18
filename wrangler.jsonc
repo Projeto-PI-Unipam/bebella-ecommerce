@@ -76,6 +76,12 @@
 					}
 				]
 			},
+			"send_email": [
+				{
+					"name": "EMAIL",
+					"remote": true
+				}
+			]
 		},
 		"dev": {
 			"vars": {
@@ -105,7 +111,13 @@
 					]
 				}
 			],
-			"routes": []
+			"routes": [],
+			"send_email": [
+				{
+					"name": "EMAIL",
+					"remote": true
+				}
+			]
 		}
 	},
 }

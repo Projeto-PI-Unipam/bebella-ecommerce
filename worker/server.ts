@@ -21,16 +21,39 @@ export default {
     const url = new URL(req.url);
     const path = url.pathname || "";
 
-    /* if (path === "/" && req.method === "GET") {
-      return env.ASSETS.fetch("https://assets.local/");
-    } */
+    if (path === "/items/count" && req.method === "GET") {
+      try {
+        const term = url.searchParams.get("precise");
+        const precise = term === "true" ? true : false;
+        const count = JSON.parse((await db.get_count(precise)) || "{}");
+        if (typeof count === "number") {
+          return new Response(JSON.stringify(count), { status: 200 });
+        } else {
+          return new Response(
+            "Não foi possível fazer a contagem no banco de dados.",
+            { status: 500 },
+          );
+        }
+      } catch (err) {
+        return new Response(JSON.stringify(err), { status: 503 });
+      }
+    }
 
     if (path === "/items/get" && req.method === "POST") {
       try {
-        const body: { limit: number; page: number; mod?: string } =
-          await req.json();
+        const body: {
+          limit: number;
+          page: number;
+          mod?: string;
+          cat?: string;
+        } = await req.json();
         console.log(body);
-        const res = await db.get_items_lim(body.limit, body.page, body.mod);
+        const res = await db.get_items_lim(
+          body.limit,
+          body.page,
+          body.mod,
+          body.cat,
+        );
         return new Response(res, { status: 200 });
       } catch (err) {
         console.error(err);
@@ -52,9 +75,18 @@ export default {
       }
     }
 
-    if (path.includes("/items/category/") && req.method === "GET") {
+    if (path.includes("/items/category") && req.method === "GET") {
       try {
-        const search = path.replace("/items/category/", "");
+        const search = url.searchParams.get("s");
+        console.log(search);
+        if (!search) {
+          return new Response(
+            JSON.stringify("Não foi encontrado termo na pesquisa."),
+            {
+              status: 400,
+            },
+          );
+        }
         const results = JSON.parse(await db.search_categories(search)) as Array<
           ClothingData[] | number
         >;
@@ -67,9 +99,17 @@ export default {
       }
     }
 
-    if (path.includes("/items/search/") && req.method === "GET") {
+    if (path.includes("/items/search") && req.method === "GET") {
       try {
-        const search = path.replace("/items/search/", "");
+        const search = url.searchParams.get("s");
+        if (!search) {
+          return new Response(
+            JSON.stringify("Não foi encontrado termo na pesquisa."),
+            {
+              status: 400,
+            },
+          );
+        }
         const results = JSON.parse(await db.search_items(search)) as Array<
           ClothingData[] | number
         >;
@@ -82,9 +122,14 @@ export default {
       }
     }
 
-    if (path.includes("/items/view/") && req.method === "GET") {
+    if (path.includes("/items/view") && req.method === "GET") {
       try {
-        const prod_id = path.replace("/items/view/", "");
+        const prod_id = url.searchParams.get("id");
+        if (!prod_id) {
+          return new Response(JSON.stringify("Pesquisa sem ID de produto."), {
+            status: 400,
+          });
+        }
         const query = JSON.parse(await db.fetch_item(prod_id));
         if (!query || !query._id) {
           return new Response(JSON.stringify("Produto não encontrado"), {
@@ -238,25 +283,32 @@ export default {
     }
 
     if (path === "/userapi/register" && req.method === "POST") {
-      const data = (await req.formData()).values();
+      const data = await req.formData();
       const body = {
-        name: data.next().value,
-        email: data.next().value,
-        password: data.next().value,
-        birth_date: data.next().value,
-        phone: data.next().value,
+        name: data.get("name"),
+        email: data.get("email"),
+        password: data.get("password"),
+        birth_date: data.get("birth_date"),
+        phone: data.get("phone"),
       };
+      if (
+        !body.name ||
+        !body.email ||
+        !body.password ||
+        !body.birth_date ||
+        !body.phone
+      ) {
+        return new Response("Dados insuficientes.", { status: 400 });
+      }
       try {
-        const new_user = JSON.parse(
-          (await db.add_user(
-            body.name,
-            body.email,
-            body.password,
-            body.birth_date,
-            body.phone,
-          )) || "{}",
+        const new_user = await db.add_user(
+          body.name.toString(),
+          body.email.toString(),
+          body.password.toString(),
+          body.birth_date.toString(),
+          body.phone.toString(),
         );
-        if (new_user && new_user._id) {
+        if (new_user) {
           return new Response(JSON.stringify(new_user!), {
             status: 200,
           });
@@ -306,9 +358,13 @@ export default {
       try {
         const data = await req.json<{
           token: string;
-          operation: string;
-          item_sid: string;
+          newcart: CartProd[];
         }>();
+        if (!data) {
+          return new Response("Carrinho não foi propriamente construído.", {
+            status: 400,
+          });
+        }
         const authed_data = JSON.parse(
           (await db.auth_user(data.token.replace(/['"]/g, ""))) || "{}",
         );
@@ -319,11 +375,8 @@ export default {
             ),
             { status: 403 },
           );
-        }
-        if (data.operation === "remove") {
-          await db.rm_cart(authed_data, data.item_sid);
         } else {
-          await db.ch_cart(authed_data, data.item_sid, data.operation);
+          await db.ch_cart(authed_data, JSON.stringify(data.newcart));
         }
         return new Response(null, { status: 204 });
       } catch (err) {
@@ -529,6 +582,32 @@ export default {
         return new Response(JSON.stringify(err), { status: 503 });
       }
     }
+
+    if (path === "/userapi/putsession" && req.method === "POST") {
+      try {
+        const body = await req.json<{ type: string; mail: string }>();
+        await db.put_session(body.type, encodeURI(body.mail));
+        return new Response(null, { status: 204 });
+      } catch (err) {
+        return new Response(JSON.stringify(err), { status: 503 });
+      }
+    }
+
+    if (path === "/userapi/parsesession" && req.method === "POST") {
+      try {
+        const body = await req.json<{ code: string; mail: string }>();
+        const res = await db.check_session(encodeURI(body.mail), body.code);
+        if (res && res === true) {
+          return new Response(null, { status: 204 });
+        }
+        if (res === false) {
+          return new Response(null, { status: 401 });
+        }
+      } catch (err) {
+        return new Response(JSON.stringify(err), { status: 503 });
+      }
+    }
+
     return new Response("Não encontrado.", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;

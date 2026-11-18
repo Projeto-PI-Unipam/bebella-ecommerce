@@ -1,11 +1,7 @@
-import { genSaltSync, hashSync } from "bcryptjs";
 import { ObjectId } from "mongodb";
-import jwt from "jsonwebtoken";
-import db from "../db/connection.ts";
 import dotenv from "dotenv";
-import { type WebSale } from "./sales.ts";
+import { type ShippingInfo, type WebSale } from "./sales.ts";
 import { type CartProd } from "./items.ts";
-import { env } from "cloudflare:workers";
 
 dotenv.config();
 
@@ -21,7 +17,7 @@ export interface UserData {
   picture_url?: string;
   wishlist_ids?: string[];
   cart_products?: CartProd[];
-  order_addresses?: string[][];
+  order_addresses?: ShippingInfo[];
   past_orders?: WebSale[];
 }
 
@@ -34,33 +30,11 @@ export interface TokenResponse {
   iat: number;
 }
 
-/* export const LocalStrategy = new Strategy(
-  {
-    usernameField: "email",
-  },
-  async function (username, password, done) {
-    try {
-      console.log(username);
-      const result = await db_coll.findOne<UserData>({
-        email: { $eq: username },
-      });
-      console.log(result);
-      if (result?.id) {
-        if (await checkPassword(username, password)) {
-          return done(null, result);
-        } else {
-          return done(null, false, {
-            message: "wrong_password",
-          });
-        }
-      } else {
-        return done(null, false, {
-          message: "no_user_found",
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      return done(null, false, { message: "error_db" });
-    }
-  },
-); */
+export interface SessionData {
+  _id: ObjectId;
+  user_email: string;
+  type: string;
+  code_salt: string;
+  code_hash: string;
+  date: Date;
+}

@@ -20,7 +20,13 @@ const test_addy: ShippingAddress = {
   complement: "Ap 301",
 };
 
-export default function CheckoutPage({ host }: { host: string | null }) {
+export default function CheckoutPage({
+  host,
+  putState,
+}: {
+  host: string | null;
+  putState: React.ActionDispatch<any>;
+}) {
   const [itemAmount, countItems] = useState(0);
   const [cartProds, setProds] = useState<Array<CartItem> | null>(null);
   const [cep, cepSet] = useState<number | null>(null);

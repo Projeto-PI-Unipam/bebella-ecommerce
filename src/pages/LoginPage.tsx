@@ -4,6 +4,7 @@ import logoHorizontal from "../assets/img/logo-horizontal-svg.svg";
 import "../assets/fonts/fonts.css";
 import { saveToken } from "../App.tsx";
 import { hash } from "bcryptjs";
+import type { UserModel } from "../database/Schema.tsx";
 
 export default function LoginPage({
   redirect,
@@ -64,7 +65,7 @@ export default function LoginPage({
       });
       location.assign(location.origin + location.search.replace("?dir=", "/"));
     } else if (response.status === 406) {
-      alert("Dados incorretos. Verifique a senha inserida!");
+      setErro("Dados incorretos. Verifique a senha inserida!");
     } else {
       console.error(response.statusText);
     }
@@ -92,11 +93,96 @@ export default function LoginPage({
         setSalt(res_salt);
         setStatus(1);
       } else if (response.status === 206) {
-        setStatus(2);
+        const sess = await sendMail("new");
+        if (sess.ok) {
+          setStatus(2);
+          return;
+        } else {
+          console.log(sess);
+        }
       }
     }
     setPending(false);
     return;
+  });
+
+  const sendMail = useEffectEvent(
+    async (type: string) =>
+      await fetch("/userapi/putsession", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: type,
+          mail: email,
+        }),
+      }),
+  );
+
+  const createUser = useEffectEvent(async () => {
+    if (!codigo || !nome || !sobrenome || !nascimento) {
+      setErro("Preencha todos os campos obrigatórios.");
+      return;
+    }
+    const check = await fetch("/userapi/parsesession", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        code: codigo,
+        mail: email,
+      }),
+    });
+    if (!check.ok) {
+      if (check.status === 401) {
+        setErro("Código incorreto.");
+      } else {
+        console.error(check);
+      }
+      return;
+    }
+    const udata = {
+      name: nome.trimEnd() + " " + sobrenome.trimStart(),
+      email: email,
+      password: pass,
+      birth_date: nascimento,
+      phone: "34998752310",
+    };
+    const res = await fetch("/userapi/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(udata),
+    });
+    if (res.ok) {
+      const token = await res.json();
+      saveToken(token);
+      setter(token);
+      saveToken(token);
+      setter(token);
+      const user_db = await fetch("/userapi/fromtoken", {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
+        body: new URLSearchParams({
+          token: token,
+        }),
+      });
+      const user_struct = await user_db.json();
+      putState({
+        type: "set_state",
+        data: user_struct,
+      });
+      location.assign(location.origin + location.search.replace("?dir=", "/"));
+    } else {
+      console.error(res);
+    }
+
+    setErro(null);
   });
 
   useEffect(() => {
@@ -131,14 +217,6 @@ export default function LoginPage({
     tryLogin();
   }
 
-  function criarConta() {
-    if (!codigo || !nome || !sobrenome || !nascimento) {
-      setErro("Preencha todos os campos obrigatórios.");
-      return;
-    }
-    setErro(null);
-  }
-
   function salvarSenha() {
     if (!codigo) {
       setErro("Digite o código que enviamos para o seu e-mail.");
@@ -163,7 +241,7 @@ export default function LoginPage({
       } else if (status === 1) {
         confirmarSenha();
       } else if (status === 2) {
-        criarConta();
+        createUser();
       } else if (status === 3) {
         salvarSenha();
       }
@@ -243,9 +321,9 @@ export default function LoginPage({
               <button
                 type="button"
                 onClick={continuar}
-                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
+                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800 transition duration-110 ease-in hover:scale-110 cursor-pointer"
               >
-                CONTINUAR
+                {"CONTINUAR"}
               </button>
             </div>
           </div>
@@ -254,17 +332,17 @@ export default function LoginPage({
         {status === 1 && (
           <div className="flex flex-col gap-4 text-left">
             <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
-              Confirme a senha para continuar
+              {"Confirme a senha para continuar"}
             </h1>
 
             <p className="font-[Prompt] text-black">
-              {email}{" "}
+              {email}
               <button
                 type="button"
                 onClick={voltarParaEmail}
-                className="font-[Prompt] text-[#f6bebf] underline"
+                className="pl-2 font-[Prompt] text-[#f6bebf] underline transition ease-in duration-110 hover:scale-107 cursor-pointer"
               >
-                (alterar)
+                {"(alterar)"}
               </button>
             </p>
 
@@ -312,37 +390,48 @@ export default function LoginPage({
 
         {status === 2 && (
           <div className="flex flex-col gap-4 text-left">
-            <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
-              Certo, vamos criar a sua conta na{" "}
+            <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight tracking-wide! text-black">
+              {"Certo, vamos criar a sua conta na "}
               <span className="text-[#f6bebf]">Bebella Boutique.</span>
             </h1>
 
             <p className="font-[Prompt] text-black">
-              enviamos um código para
+              {"enviamos um código para"}
               <br />
-              {email}{" "}
+              {email}
               <button
                 type="button"
                 onClick={voltarParaEmail}
-                className="font-[Prompt] text-[#f6bebf] underline"
+                className="pl-2 font-[Prompt] text-[#f6bebf] underline transition duration-110 ease-in hover:scale-107 cursor-pointer"
               >
-                (alterar)
+                {"(alterar)"}
               </button>
             </p>
 
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex gap-4 justify-between">
+              <div className="flex flex-col items-start gap-1">
+                <input
+                  placeholder="código"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                />
+                <button
+                  type="button"
+                  className="font-[Prompt] text-sm text-black underline cursor-pointer transition duration-110 hover:scale-107 ease-in"
+                  onClick={() => sendMail("new")}
+                >
+                  {"reenviar código"}
+                </button>
+              </div>
+
               <input
-                placeholder="código"
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
-                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
+                type={showPass ? "text" : "password"}
+                placeholder="senha*"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 pr-24 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
               />
-              <button
-                type="button"
-                className="font-[Prompt] text-sm text-black underline"
-              >
-                reenviar código
-              </button>
             </div>
 
             <div className="flex gap-4">
@@ -381,7 +470,7 @@ export default function LoginPage({
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={criarConta}
+                onClick={createUser}
                 className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
               >
                 Criar conta
@@ -393,19 +482,19 @@ export default function LoginPage({
         {status === 3 && (
           <div className="flex flex-col gap-4 text-left">
             <h1 className="font-[Prompt] text-[calc(2rem+0.8svw)] font-medium leading-tight text-black">
-              Verifique seu e-mail e insira uma nova senha.
+              {"Verifique seu e-mail e insira uma nova senha."}
             </h1>
 
             <p className="font-[Prompt] text-black">
-              enviamos um código para
+              {"enviamos um código para"}
               <br />
-              {email}{" "}
+              {email}
               <button
                 type="button"
                 onClick={voltarParaEmail}
-                className="font-[Prompt] text-[#f6bebf] underline"
+                className="pl-2 font-[Prompt] text-[#f6bebf] underline transition ease-in duration-110 hover:scale-107 cursor-pointer"
               >
-                (alterar)
+                {"(alterar)"}
               </button>
             </p>
 

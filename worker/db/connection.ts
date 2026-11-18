@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { genSaltSync, hashSync } from "bcryptjs";
+import { randomBytes, pbkdf2Sync, timingSafeEqual } from "node:crypto";
 import jwt from "jsonwebtoken";
 import {
   type Db,
@@ -9,15 +10,16 @@ import {
   type PullOperator,
   type Document,
 } from "mongodb";
-import type { ClothingData } from "../schema/items.ts";
+import type { CartProd, ClothingData } from "../schema/items.ts";
 import type { SaleReview, WebSale } from "../schema/sales.ts";
-import type { TokenResponse, UserData } from "../schema/users.ts";
+import type { SessionData, TokenResponse, UserData } from "../schema/users.ts";
 
 export class MongoDBConnection extends DurableObject<Env> {
   private client!: MongoClient;
   private db!: Db;
   private MP_ACCESS!: string;
   private JWT_SEC!: string;
+  // @ts-ignore
   private ADMIN_FID!: string;
   private FRONT_END!: string;
 
@@ -25,16 +27,26 @@ export class MongoDBConnection extends DurableObject<Env> {
     super(ctx, env);
     this.ctx.blockConcurrencyWhile(async () => {
       if (import.meta.env.MODE === "production" || env.CF_ENV == "production") {
+        // @ts-ignore
         this.client = new MongoClient(await env.DBPROD_URL.get());
+        // @ts-ignore
         this.db = this.client.db("bebella_store");
+        // @ts-ignore
         this.MP_ACCESS = await env.MP_ACCESS.get();
+        // @ts-ignore
         this.JWT_SEC = await env.JWT_SEC.get();
+        // @ts-ignore
         this.ADMIN_FID = await env.ADMIN_FID.get();
       } else {
+        // @ts-ignore
         this.client = new MongoClient(env.DBPROD_URL);
+        // @ts-ignore
         this.db = this.client.db("bebella_store");
+        // @ts-ignore
         this.MP_ACCESS = env.MP_ACCESS;
+        // @ts-ignore
         this.JWT_SEC = env.JWT_SEC;
+        // @ts-ignore
         this.ADMIN_FID = env.ADMIN_FID;
       }
       this.FRONT_END = "https://bebellaboutique.com";
@@ -52,22 +64,38 @@ export class MongoDBConnection extends DurableObject<Env> {
     return JSON.stringify([results, count]);
   }
 
-  async get_items_lim(limit: number, iter: number, mod?: string) {
+  async get_items_lim(limit: number, iter: number, mod?: string, cat?: string) {
+    const in_limit = Math.min(limit, 50);
+    const cat_exp = (categ?: string) => {
+      if (!categ) {
+        return {};
+      }
+      const search_reg = new RegExp(`.*${categ}.*`, "gi");
+      const query = { category: search_reg };
+      return query;
+    };
     await this.client.connect();
     const results = await this.db
       .collection("items")
-      .find<ClothingData>(
-        {},
-        {
-          sort: mod === "latest" ? { date: -1 } : {},
-          limit: limit,
-          batchSize: limit,
-          singleBatch: true,
-          skip: limit * (iter - 1),
-        },
-      )
+      .find<ClothingData>(cat_exp(cat), {
+        sort: mod === "latest" ? { date: -1 } : {},
+        limit: in_limit,
+        batchSize: in_limit,
+        singleBatch: true,
+        skip: in_limit * (iter - 1),
+      })
       .toArray();
     return JSON.stringify(results);
+  }
+
+  async get_count(precise?: boolean) {
+    await this.client.connect();
+    const coll = this.db.collection("items");
+    const count =
+      precise && precise === true
+        ? await coll.countDocuments()
+        : await coll.estimatedDocumentCount();
+    return JSON.stringify(count);
   }
 
   async search_items(searchTerm: string) {
@@ -249,7 +277,6 @@ export class MongoDBConnection extends DurableObject<Env> {
     const user = await this.db.collection("users").findOne({
       email: user_email,
     });
-    console.log(user);
     if (user === null) {
       return JSON.stringify(false);
     } else {
@@ -266,17 +293,6 @@ export class MongoDBConnection extends DurableObject<Env> {
     const new_hash = hashSync(password, new_salt);
     return JSON.stringify([new_salt, new_hash]);
   }
-
-  /* async function checkPassword(user_email: string, password: string) {
-  try {
-    const obj = await this.db.collection("users").findOne<UserData>({ email: { $eq: user_email } });
-    // const hash_try = compareSync(password, obj!.hash);
-    //return hash_try;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-} */
 
   gen_token(user_data: UserData) {
     const expiry = new Date();
@@ -298,13 +314,14 @@ export class MongoDBConnection extends DurableObject<Env> {
     name: string,
     user_email: string,
     password: string,
-    birth: Date,
+    birth: string,
     user_phone: string,
   ) {
     const test_exist = await this.db
       .collection("users")
-      .find({ email: { $eq: user_email } })
+      .find({ email: user_email })
       .toArray();
+    console.log(test_exist);
     if (test_exist && test_exist.length === 0) {
       const new_salt = genSaltSync(16);
       const new_hashpass = hashSync(password, new_salt);
@@ -314,7 +331,7 @@ export class MongoDBConnection extends DurableObject<Env> {
         name: name,
         email: user_email,
         phone: user_phone,
-        birth_date: birth,
+        birth_date: new Date(birth),
         hash: new_hashpass,
         salt: new_salt,
       };
@@ -375,31 +392,134 @@ export class MongoDBConnection extends DurableObject<Env> {
       } as unknown as PullOperator<Document>);
   }
 
-  async ch_cart(user_sid: string, item_sid: string, operation: string) {
-    if (!(operation === "increase" || operation === "decrease")) {
-      return;
-    }
+  async ch_cart(user_sid: string, new_cart: string) {
+    const cart: CartProd[] = JSON.parse(new_cart);
     const state = await this.db
       .collection("users")
       .findOne<UserData>({ _id: new ObjectId(user_sid) });
     if (!state || !state.cart_products) {
       return;
     }
-    const current_item_index = state?.cart_products?.findIndex(
-      (p) => p._id?.toString() === item_sid,
-    );
-    if (current_item_index === -1) {
-      return;
-    }
-    if (operation === "increase") {
-      state!.cart_products![current_item_index].amount += 1;
-    }
-    if (operation === "decrease") {
-      state!.cart_products![current_item_index].amount -= 1;
-    }
+    const new_user = { ...state, cart_products: cart };
     await this.db
       .collection("users")
-      .findOneAndReplace({ _id: new ObjectId() }, state);
-    console.log(state);
+      .findOneAndReplace({ _id: new ObjectId(user_sid) }, new_user);
+  }
+
+  async send_mail(
+    prefix: string,
+    dest_enc: string,
+    subject: string,
+    html_enc: string,
+    text: string,
+  ) {
+    const res = await this.env.EMAIL!.send({
+      to: decodeURI(dest_enc),
+      from: `${prefix}@mail.bebellaboutique.com`,
+      subject: subject,
+      html: decodeURI(html_enc),
+      text: text,
+    });
+    return res;
+  }
+
+  async put_session(type: string, mail_enc: string) {
+    await this.client.connect();
+    const mail_dec = decodeURI(mail_enc);
+    /* const exist_prom = this.db
+      .collection("sessions")
+      .find({ user_email: mail_dec })
+      .toArray(); */
+    const salt = genSaltSync(12);
+    const code = randomBytes(8).toString("hex").toUpperCase().slice(0, 8);
+    const hash = pbkdf2Sync(code, salt, 30000, 64, "sha512").toString("hex");
+    console.log(hash);
+    const session: SessionData = {
+      _id: new ObjectId(),
+      type: type,
+      user_email: mail_dec,
+      code_salt: salt,
+      code_hash: hash,
+      date: new Date(),
+    };
+    const prefix =
+      type === "new"
+        ? "welcome"
+        : type === "recover"
+          ? "recovery"
+          : type === "2fa"
+            ? "authentication"
+            : "account";
+    const subject =
+      type === "new"
+        ? "Código para criação de conta na Bebella Boutique"
+        : type === "recover"
+          ? "Código para recuperação de senha na Bebella Boutique"
+          : type === "2fa"
+            ? "Código para confirmação de acesso na Bebella Boutique"
+            : "Código de confirmação Bebella Boutique";
+    const text =
+      type === "new"
+        ? `Bem vindo à Bebella Boutique! Use o código a seguir para poder completar a criação da sua conta: ${code}`
+        : type === "recover"
+          ? `Esqueceu sua senha? Use o código a seguir para recuperar seu acesso à Bebella Boutique: ${code}`
+          : type === "2fa"
+            ? `Para fazer login na Bebella Boutique, confirme seu acesso utilizando o código a seguir: ${code}`
+            : `Confirme seu acesso à Bebella Boutique com o código a seguir: ${code}`;
+    const html =
+      type === "new"
+        ? `<h1>Bem vindo à Bebella Boutique!</h1> <p>Use o código a seguir para poder completar a criação da sua conta:</p> <br><strong>${code}</strong>`
+        : type === "recover"
+          ? `<h1>Esqueceu sua senha?</h1> <p>Use o código a seguir para recuperar seu acesso à Bebella Boutique:</p> <br><strong>${code}</strong>`
+          : type === "2fa"
+            ? `<h1>Confirme seu acesso</h1> <p>Para fazer login na Bebella Boutique, confirme seu acesso utilizando o código a seguir:</p> <br><strong>${code}</strong>`
+            : `<h1>Confirme seu acesso à Bebella Boutique</h1> <p>Verifique seu login com o código a seguir:</p> <strong>${code}</strong>`;
+    // @ts-ignore
+    const _mail_res = await this.send_mail(
+      prefix,
+      mail_enc,
+      subject,
+      encodeURI(html),
+      text,
+    );
+    /* const existing = await exist_prom;
+    if (existing && existing.length >= 1) {
+      for (const session of existing) {
+        await this.db
+          .collection("sessions")
+          .findOneAndDelete({ _id: session._id });
+        console.log("del", session);
+      }
+    } */
+    console.log(session);
+    await this.db.collection("sessions").insertOne(session);
+  }
+
+  async check_session(mail_enc: string, input_code: string) {
+    const mail_dec = decodeURI(mail_enc);
+    const session = await this.db
+      .collection("sessions")
+      .find<SessionData>(
+        { user_email: mail_dec },
+        { sort: { date: -1 }, limit: 1 },
+      )
+      .toArray();
+    if (!session || session.length === 0) {
+      return false;
+    }
+    const inp_hash = pbkdf2Sync(
+      input_code.trim().toUpperCase(),
+      session[0].code_salt,
+      30000,
+      64,
+      "sha512",
+    ).toString("hex");
+    const encoder = new TextEncoder();
+    const check = timingSafeEqual(
+      encoder.encode(session[0].code_hash),
+      encoder.encode(inp_hash),
+    );
+    console.log(check);
+    return check;
   }
 }

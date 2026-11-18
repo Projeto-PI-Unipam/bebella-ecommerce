@@ -19,39 +19,30 @@ import OrdersPage from "./pages/OrdersPage.tsx";
 import ProductPage from "./pages/ProductPage.tsx";
 //import ClothesList from "./components/ClothesList.tsx";
 import SearchPage from "./pages/SearchPage.tsx";
-import { type ClothesModel } from "./database/Schema.tsx";
-
-export interface UserModel {
-  id?: ObjectId;
-  func_id?: number;
-  name: string;
-  email: string;
-  hash: string;
-  salt: string;
-  birth_date: Date;
-  picture_url?: string;
-  wishlist_ids?: string[];
-  cart_products?: string[];
-  order_addresses?: string[];
-  past_orders?: string[];
-}
+import { type ClothesModel, type DBState } from "./database/Schema.tsx";
+import { type UserModel } from "./database/Schema.tsx";
 
 export function saveToken(token: string) {
-  sessionStorage.setItem("token", JSON.stringify(token));
+  localStorage.setItem("token", JSON.stringify(token));
 }
 
 function delToken() {
-  sessionStorage.setItem("token", "");
-  sessionStorage.removeItem("token");
+  localStorage.setItem("token", "");
+  localStorage.removeItem("token");
+  localStorage.setItem("userdata", "");
+  localStorage.removeItem("userdata");
 }
 
 function getToken() {
-  const tokenString = sessionStorage.getItem("token");
+  const tokenString = localStorage.getItem("token");
   if (!tokenString) {
     return null;
   }
   try {
-    const userToken = JSON.parse(tokenString);
+    const userToken: string = (JSON.parse(tokenString) as string).replace(
+      /['"]/g,
+      "",
+    );
     return userToken;
   } catch (_e) {
     return null;
@@ -59,36 +50,53 @@ function getToken() {
 }
 
 export const AuthContext = createContext<UserModel | null>(null);
+export const DBContext = createContext<DBState>({ count: 0 });
 
 export default function App() {
   const [userToken, setToken] = useState<string | null>(null);
   const [pending, setPending] = useState<boolean | null>(null);
-  const [userState, putUserState] = useState<UserModel | null>(null);
+  const [dbState, putDB] = useState<DBState>({ count: 0 });
+  const [userState, putUserState] = useState<UserModel | null>(
+    localStorage.getItem("userdata") === null
+      ? null
+      : JSON.parse(localStorage.getItem("userdata")!),
+  );
 
   function putState(stateOp: { type: string; data: any }) {
+    if (!stateOp.type || !stateOp.data) {
+      return;
+    }
     switch (stateOp.type) {
       case "set_state": {
-        return stateOp.data;
+        putUserState(stateOp.data);
+        localStorage.setItem("userdata", JSON.stringify(stateOp.data));
+        return;
       }
       case "set_cart": {
-        return {
-          ...userState!,
-          cart_products: stateOp.data,
-        };
+        putUserState({ ...userState!, cart_products: stateOp.data });
+        localStorage.setItem(
+          "userdata",
+          JSON.stringify({ ...userState!, cart_products: stateOp.data }),
+        );
+        return;
       }
       case "add_cart": {
         const new_user: UserModel = {
           ...userState!,
           cart_products: [...(userState!.cart_products || []), stateOp.data],
         };
-        return new_user;
+        localStorage.setItem("userdata", JSON.stringify(new_user));
+        putUserState(new_user);
+        return;
       }
       case "add_wishlist": {
         const new_user: UserModel = {
           ...userState!,
           wishlist_ids: [...(userState!.wishlist_ids || []), stateOp.data],
         };
-        return new_user;
+        localStorage.setItem("userdata", JSON.stringify(new_user));
+        putUserState(new_user);
+        return;
       }
       /* case "fetch_cart": {
 				return user?.cart_products ?? [];
@@ -103,6 +111,30 @@ export default function App() {
   }
 
   useEffect(() => {
+    async function getDBCount() {
+      const dbs = dbState.refreshTime
+        ? dbState
+        : localStorage.getItem("dbState") === null
+          ? null
+          : JSON.parse(localStorage.getItem("dbState")!);
+      if (
+        dbs &&
+        dbs.refreshTime &&
+        new Date().valueOf() - dbs.refreshTime.valueOf() < 1 * 60 * 60 * 1000
+      ) {
+        return;
+      }
+      const res = await fetch("/items/count");
+      if (res.ok) {
+        const body = await res.json();
+        const num = parseInt(body);
+        const state = { count: num, refreshTime: new Date() };
+        putDB(state);
+        localStorage.setItem("dbState", JSON.stringify(state));
+      } else {
+        console.error(res);
+      }
+    }
     async function getUser() {
       setPending(true);
       setToken(getToken());
@@ -130,12 +162,11 @@ export default function App() {
                 token: userToken,
               }),
             });
-            const user_struct = await user_db.json();
+            const user_struct: UserModel = await user_db.json();
             putState({
               type: "set_state",
               data: user_struct,
             });
-            console.log(userState);
           }
           setPending(false);
           return;
@@ -147,13 +178,14 @@ export default function App() {
         }
       }
     }
+    getDBCount();
     getUser();
     setPending(false);
     return;
   }, [
     location.href,
     location,
-    sessionStorage.length,
+    localStorage.length,
     location.pathname,
     userToken,
   ]);
@@ -184,7 +216,7 @@ export default function App() {
 
             <Route
               path="/product/*"
-              element={<ProductPage putState={putState} />}
+              element={<ProductPage host={userToken} putState={putState} />}
             />
 
             <Route

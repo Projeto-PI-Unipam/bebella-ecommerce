@@ -1,18 +1,21 @@
 import { CaretDownIcon } from "@phosphor-icons/react/dist/csr/CaretDown";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { PageNavButton, PageNavIndicator } from "../components/PageButton";
+import { PageNavButton, PageNavIndicator } from "../components/PageButton.tsx";
 import "../assets/fonts/fonts.css";
 import ProductCard from "../components/ProductCard.tsx";
-import { type ClothesModel, type size, sizes } from "../database/Schema.tsx";
-import { test_p1, test_p2 } from "../database/Test.tsx";
+import {
+  type ClothesModel /*, type size, sizes*/,
+} from "../database/Schema.tsx";
+//import { test_p1, test_p2 } from "../database/Test.tsx";
 import { ObjectId } from "bson";
+import clsx from "clsx";
 
 function formatSearch(term: string) {
   const searchRegex = new RegExp(/(\?s=)(.+)/);
   const searchResults = searchRegex.exec(term);
   if (searchResults && searchResults.length > 2) {
-    return searchResults[2];
+    return "?s=" + searchResults[2];
   } else {
     throw new Error("Não foram encontrados resultados para essa pesquisa.");
   }
@@ -26,8 +29,17 @@ export default function SearchPage({ searchType }: { searchType: string }) {
   const [currentPage, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(Math.ceil(itemCount / perPage));
-  const [category, setCategory] = useState<null | string>(null);
+  const [categoryFilter, setCategoryF] = useState<null | string>(null);
   const location = useLocation();
+  const searchTerm = location.search.replace(/\?s=/gi, "");
+
+  const getCategories = () => [...new Set(itemsBase.map((cl) => cl.category))];
+
+  /* const relevRes = () => {
+    const checkMatch = (search: string, name: string) => {
+      search.split("");
+    };
+  }; */
 
   useEffect(() => {
     async function getItems() {
@@ -35,9 +47,10 @@ export default function SearchPage({ searchType }: { searchType: string }) {
         return;
       }
       const endpoint =
-        searchType === "items"
-          ? `/items/search/${formatSearch(location.search)}`
-          : `/items/category/${formatSearch(location.search)}`;
+        "/items/" +
+        (searchType === "items" ? "search" : "category") +
+        formatSearch(location.search);
+      console.log(endpoint);
       const results = await fetch(endpoint, { method: "GET" });
       if (!results.ok) {
         console.error(results.status, results.statusText);
@@ -50,10 +63,14 @@ export default function SearchPage({ searchType }: { searchType: string }) {
     }
     getItems();
     return;
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, window.location.href]);
 
   function clothesList() {
-    const lst = itemsBase.map((c) => {
+    const cl_array =
+      categoryFilter === null
+        ? itemsBase
+        : itemsBase.filter((it) => it.category === categoryFilter);
+    const lst = cl_array.map((c) => {
       const id = c._id || new ObjectId();
       const d: ClothesModel = {
         _id: id,
@@ -69,7 +86,7 @@ export default function SearchPage({ searchType }: { searchType: string }) {
         dimensions: c.dimensions,
         weight: c.weight,
       };
-      return <ProductCard item={d} />;
+      return <ProductCard item={d} key={d._id.toString()} />;
     });
     return lst;
   }
@@ -85,14 +102,12 @@ export default function SearchPage({ searchType }: { searchType: string }) {
             >
               {"Início".toUpperCase()}
             </span>
-            {(
-              " / Busca / " + location.search.replace(/\?s=/gi, "")
-            ).toUpperCase()}
+            {(" / Busca / " + searchTerm).toUpperCase()}
           </span>
         </div>
         <div className="flex flex-row w-full h-2/5 mt-2 items-center justify-between">
           <span className="ml-8 text-7xl text-neutral-800 font-[Boston_Angel]">
-            {"Titulo"}
+            {searchTerm.toLowerCase()}
           </span>
           <div className="bg-transparent border-solid border-2 border-[#f6bebf] w-48 h-12 mr-12 mt-16 rounded-lg flex flex-row items-center justify-between pl-2 pr-2">
             <span className="text-sm font-medium text-neutral-800 font-[Prompt]">
@@ -103,12 +118,20 @@ export default function SearchPage({ searchType }: { searchType: string }) {
         </div>
         <div className="flex flex-row w-full h-1/8">
           <span className="ml-8 mt-3 text-base text-neutral-600 font-[Prompt]">
-            {"10 Resultados".toUpperCase()}
+            {`${itemCount} ${itemCount === 1 ? "Resultado" : "Resultados"}`.toUpperCase()}
           </span>
         </div>
         <div className="flex flex-row w-full h-1/2 bg-rose-50 mt-4 items-center justify-center gap-4">
-          {["Camisas", "Shorts", "Calças", "Vestidos", "Saias"].map((s) => (
-            <div className="rounded-2xl border-[#f6bebf] border-2 pl-3 pr-3 pt-1 pb-1 cursor-pointer transform hover:scale-110">
+          {getCategories().map((s) => (
+            <div
+              className={clsx(
+                "rounded-2xl border-[#f6bebf] border-2 pl-3 pr-3 pt-1 pb-1 cursor-pointer transform hover:scale-110 duration-110",
+                categoryFilter === s && "scale-108 bg-rose-200",
+              )}
+              onClick={() =>
+                categoryFilter === s ? setCategoryF(null) : setCategoryF(s)
+              }
+            >
               <span className="text-neutral-800 text-base font-[Prompt]">
                 {s}
               </span>

@@ -14,9 +14,15 @@ export function before_discount(price: number, discount: number): number {
 export function apply_discount(price: number, discount: number): number {
   return price - price * discount;
 }
-export const upfront_discount = 0.12;
+export const upfront_discount = 0.05;
 export function to_currency(amount: number): string {
   return `R$ ${amount.toLocaleString("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+}
+export const def_installments = 6;
+
+export interface DBState {
+  count: number;
+  refreshTime?: Date;
 }
 
 export interface ClothesModel {
@@ -71,4 +77,19 @@ export interface WebSale {
   date?: Date;
   buyer_id: ObjectId;
   payment_db_id?: string;
+}
+
+export interface UserModel {
+  id?: ObjectId;
+  func_id?: number;
+  name: string;
+  email: string;
+  hash: string;
+  salt: string;
+  birth_date: Date;
+  picture_url?: string;
+  wishlist_ids?: string[];
+  cart_products?: string[];
+  order_addresses?: ShippingAddress[];
+  past_orders?: string[];
 }

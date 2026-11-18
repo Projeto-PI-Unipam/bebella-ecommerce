@@ -32,34 +32,38 @@ export default function Footer() {
           <span>{"Patos de Minas, MG - 38.700-338"}</span>
         </div>
       </div>
-      <div className="h-full w-1/12 min-w-40 flex flex-col justify-center items-start">
-        <span className="font-normal mb-1">{"Área do Cliente"}</span>
+      <div className="h-5/7 w-1/12 min-w-40 flex flex-col justify-start items-start">
+        <span className="font-normal mt-0 mb-1">{"Área do Cliente"}</span>
+        {false && (
+          <span
+            className="hover:text-red-400 cursor-pointer"
+            onClick={() => location.assign(location.origin + "/login")}
+          >
+            {"Minha Conta"}
+          </span>
+        )}
         <span
           className="hover:text-red-400 cursor-pointer"
-          onClick={() => location.assign(location.origin + "/login")}
-        >
-          {"Minha Conta"}
-        </span>
-        <span
-          className="hover:text-red-400 cursor-pointer"
-          onClick={() => location.assign(location.origin + "/usuario/pedidos")}
+          onClick={() => location.assign(location.origin + "/orders")}
         >
           {"Meus Pedidos"}
         </span>
         <span
           className="hover:text-red-400 cursor-pointer"
-          onClick={() => location.assign(location.origin + "/usuario/carrinho")}
+          onClick={() => location.assign(location.origin + "/cart")}
         >
           {"Meu Carrinho"}
         </span>
-        <span
-          className="hover:text-red-400 cursor-pointer"
-          onClick={() =>
-            location.assign(location.origin + "/usuario/favoritos")
-          }
-        >
-          {"Meus Favoritos"}
-        </span>
+        {false && (
+          <span
+            className="hover:text-red-400 cursor-pointer"
+            onClick={() =>
+              location.assign(location.origin + "/usuario/favoritos")
+            }
+          >
+            {"Meus Favoritos"}
+          </span>
+        )}
       </div>
       <div className="h-full w-1/10 min-w-52 flex flex-col justify-center items-start">
         <span className="font-normal mb-1">{"Ajuda"}</span>
