@@ -1,63 +1,19 @@
 import patternBg from "../assets/img/pattern_cut.png";
+import { type ClothesModel, to_currency } from "../database/Schema.tsx";
 import {
-  bucket,
-  type ClothesModel,
-  to_currency,
-} from "../database/Schema.tsx";
+  conteudo_padrao,
+  desconto_pix,
+  type HomeContent,
+  image_url,
+} from "../database/ConteudoHome.ts";
+import { CaretLeftIcon } from "@phosphor-icons/react/dist/csr/CaretLeft";
+import { CaretRightIcon } from "@phosphor-icons/react/dist/csr/CaretRight";
 import "../assets/fonts/fonts.css";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
-// Conteúdo da home (campanha, benefícios, banner e newsletter).
-// Esses textos aparecem enquanto o painel não publica nada em /items/home.
-interface HomeContent {
-  show_campaign: boolean;
-  campaign: {
-    tag: string;
-    title: string;
-    text: string;
-    button: string;
-    link: string;
-    image: string;
-  };
-  benefits: { highlight: string; text: string }[];
-  banner: { title: string; text: string; button: string; link: string };
-  newsletter: { title: string; text: string };
-}
-
-const default_home_content: HomeContent = {
-  show_campaign: true,
-  campaign: {
-    tag: "EM ESPERA",
-    title: "Em espera",
-    text: "Em espera",
-    button: "EM ESPERA",
-    link: "",
-    image: "",
-  },
-  benefits: [
-    { highlight: "Frete grátis", text: "acima de R$ 299" },
-    { highlight: "5% OFF", text: "no Pix" },
-    { highlight: "Até 6x sem juros", text: "no cartão" },
-    { highlight: "Troca grátis", text: "em 30 dias" },
-  ],
-  banner: {
-    title: "5% OFF no Pix em toda a loja",
-    text: "O desconto já aparece no pagamento. Parcele no cartão em até 6x sem juros.",
-    button: "APROVEITAR",
-    link: "",
-  },
-  newsletter: {
-    title: "Ganhe 10% OFF na primeira compra",
-    text: "Cadastre seu e-mail e receba novidades e ofertas antes de todo mundo.",
-  },
-};
-
-const pix_discount = 0.05;
-
-function image_url(name?: string): string | undefined {
-  if (!name) return undefined;
-  if (/^(https?:|blob:|data:|\/)/.test(name)) return name;
-  return `${bucket}/${name}`;
+// Espaço que não quebra linha entre "R$" e o valor.
+function preco(valor: number) {
+  return to_currency(valor).replace(" ", "\u00a0");
 }
 
 function idDoProduto(p: ClothesModel) {
@@ -78,7 +34,7 @@ function CardProduto({ item }: { item: ClothesModel }) {
   return (
     <a
       href={"/product/" + idDoProduto(item)}
-      className="flex min-w-0 flex-col gap-3 text-neutral-800! no-underline"
+      className="flex min-w-0 flex-col gap-3 rounded-md text-neutral-800! no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#98263e]"
     >
       <span className="relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed]">
         {foto && (
@@ -92,13 +48,15 @@ function CardProduto({ item }: { item: ClothesModel }) {
         <SeloEstoque estoque={item.in_stock} />
       </span>
       <span className="flex flex-col gap-1">
-        <span className="text-[15px] leading-snug">{item.name}</span>
-        <span className="text-base font-medium">{to_currency(item.price)}</span>
+        <span className="line-clamp-2 text-[15px] leading-snug">
+          {item.name}
+        </span>
+        <span className="text-base font-medium">{preco(item.price)}</span>
         <span className="text-[13px] font-medium text-[#98263e]">
-          {to_currency(item.price * (1 - pix_discount))} no Pix
+          {preco(item.price * (1 - desconto_pix))} no Pix
         </span>
         <span className="text-[13px] text-[#6b6461]">
-          ou 6x de {to_currency(item.price / 6)} sem juros
+          ou 6x de {preco(item.price / 6)} sem juros
         </span>
       </span>
     </a>
@@ -118,7 +76,7 @@ function CardEsqueleto() {
 function TituloSecao({ titulo }: { titulo: string }) {
   return (
     <div className="mb-6 flex items-baseline justify-between gap-4">
-      <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-wide! text-neutral-800! md:text-2xl!">
+      <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-wide! text-balance text-neutral-800! md:text-2xl!">
         {titulo}
       </h2>
     </div>
@@ -141,11 +99,167 @@ function GradeProdutos({
   );
 }
 
+const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function Newsletter({ titulo, texto }: { titulo: string; texto: string }) {
+  const [email, setEmail] = useState<string>("");
+  const [estado, setEstado] = useState<"parado" | "enviando" | "ok">("parado");
+  const [erro, setErro] = useState<string | null>(null);
+  const campo = useRef<HTMLInputElement>(null);
+
+  async function cadastrar(e: FormEvent) {
+    e.preventDefault();
+    const valor = email.trim();
+    if (!emailValido.test(valor)) {
+      setErro("Digite um e-mail válido, como nome@email.com.");
+      campo.current?.focus();
+      return;
+    }
+    setErro(null);
+    setEstado("enviando");
+    try {
+      const res = await fetch("/items/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: valor }),
+      });
+      if (!res.ok) throw new Error();
+      setEstado("ok");
+      setEmail("");
+    } catch {
+      setEstado("parado");
+      setErro("Não conseguimos cadastrar agora. Tente de novo em instantes.");
+    }
+  }
+
+  return (
+    <section className="mx-auto flex w-full max-w-7xl flex-col items-center gap-2.5 px-4 py-14 text-center md:py-24">
+      <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-normal! text-balance text-neutral-800! md:text-2xl!">
+        {titulo}
+      </h2>
+      <p className="text-sm text-pretty text-[#6b6461] md:text-[15px]">
+        {texto}
+      </p>
+      <form
+        noValidate
+        onSubmit={cadastrar}
+        className="mt-3 flex w-full max-w-[520px] flex-col gap-2.5 md:flex-row"
+      >
+        <label htmlFor="newsletter-email" className="sr-only">
+          Seu e-mail
+        </label>
+        <input
+          ref={campo}
+          id="newsletter-email"
+          type="email"
+          name="email"
+          autoComplete="email"
+          inputMode="email"
+          spellCheck={false}
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (estado === "ok") setEstado("parado");
+          }}
+          aria-invalid={erro ? true : undefined}
+          aria-describedby="newsletter-retorno"
+          placeholder="nome@email.com…"
+          className="h-12 flex-1 rounded-full border border-[#e3c9c4] bg-white px-5 text-[15px] text-neutral-800 outline-none focus-visible:border-[#98263e] focus-visible:ring-2 focus-visible:ring-[#98263e]/15 aria-invalid:border-[#8a2b2b]"
+        />
+        <button
+          type="submit"
+          disabled={estado === "enviando"}
+          className="h-12 cursor-pointer rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800 hover:bg-[#f2aeb0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#98263e] disabled:cursor-default disabled:opacity-70"
+        >
+          {estado === "enviando" ? "CADASTRANDO…" : "CADASTRAR E-MAIL"}
+        </button>
+      </form>
+      <p
+        id="newsletter-retorno"
+        aria-live="polite"
+        className={`m-0 min-h-5 text-sm ${erro ? "text-[#8a2b2b]" : "text-[#2c6243]"}`}
+      >
+        {erro ?? (estado === "ok" ? "Pronto! Seu e-mail foi cadastrado." : "")}
+      </p>
+    </section>
+  );
+}
+
+// Faixa de benefícios logo abaixo da navbar. No computador mostra todos numa
+// linha; no celular mostra um por vez, com setas para trocar (sem troca
+// automática).
+function Beneficio({ b }: { b: HomeContent["benefits"][number] }) {
+  return (
+    <>
+      <strong className="font-bold text-white">{b.highlight}</strong>{" "}
+      {b.text.replace("R$ ", "R$\u00a0")}
+    </>
+  );
+}
+
+function FaixaBeneficios({
+  beneficios,
+}: {
+  beneficios: HomeContent["benefits"];
+}) {
+  const [atual, setAtual] = useState<number>(0);
+  const total = beneficios.length;
+  if (total === 0) return null;
+  const mostrar = beneficios[atual % total];
+  const ir = (passo: number) => setAtual((i) => (i + passo + total) % total);
+  const seta =
+    "flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-full text-[#e9e4e2] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:hidden";
+
+  return (
+    <div className="bg-[#2b2b2b] text-xs tracking-[0.07em] text-[#e9e4e2] uppercase">
+      <div className="mx-auto flex h-[38px] max-w-7xl items-center justify-center px-2">
+        {total > 1 && (
+          <button
+            type="button"
+            onClick={() => ir(-1)}
+            aria-label="Benefício anterior"
+            className={seta}
+          >
+            <CaretLeftIcon size={14} aria-hidden="true" />
+          </button>
+        )}
+        <p aria-live="polite" className="m-0 flex-1 text-center md:hidden">
+          <Beneficio b={mostrar} />
+        </p>
+        {total > 1 && (
+          <button
+            type="button"
+            onClick={() => ir(1)}
+            aria-label="Próximo benefício"
+            className={`${seta} order-last`}
+          >
+            <CaretRightIcon size={14} aria-hidden="true" />
+          </button>
+        )}
+        <ul className="m-0 hidden list-none items-center gap-3.5 p-0 md:flex">
+          {beneficios.map((b, i) => (
+            <li key={i} className="flex items-center gap-3.5">
+              {i > 0 && (
+                <span aria-hidden="true" className="text-[#6b6461]">
+                  ·
+                </span>
+              )}
+              <span>
+                <Beneficio b={b} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [newHighlights, setNewHl] = useState<ClothesModel[]>([]);
   const [mostSoldHl, setSoldHl] = useState<ClothesModel[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
-  const [conteudo, setConteudo] = useState<HomeContent>(default_home_content);
+  const [conteudo, setConteudo] = useState<HomeContent>(conteudo_padrao);
 
   useEffect(() => {
     async function getSelect(mod: "latest" | "selling") {
@@ -197,18 +311,7 @@ export default function HomePage() {
 
   return (
     <div className="flex w-full flex-col bg-white text-left font-[Prompt] text-neutral-800">
-      <div className="bg-[#fdf1ee] px-4 py-3 text-[13px] text-[#2b2b2b] md:text-sm">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-1 text-center">
-          {conteudo.benefits.map((b, i) => (
-            <span key={i} className={i > 1 ? "hidden md:inline" : ""}>
-              <strong className="font-bold text-[#98263e]">
-                {b.highlight}
-              </strong>{" "}
-              {b.text}
-            </span>
-          ))}
-        </div>
-      </div>
+      <FaixaBeneficios beneficios={conteudo.benefits} />
 
       {conteudo.show_campaign && (
         <section className="flex w-full flex-col bg-[#f8eeeb] md:h-[440px] md:flex-row">
@@ -216,7 +319,7 @@ export default function HomePage() {
             <span className="text-xs tracking-[0.12em] text-[#6b3a44] md:text-[13px]">
               {conteudo.campaign.tag}
             </span>
-            <h1 className="m-0! font-[Prompt]! text-3xl! leading-tight! font-medium! tracking-normal! text-neutral-800! md:text-[40px]!">
+            <h1 className="m-0! font-[Prompt]! text-3xl! leading-tight! font-medium! tracking-normal! text-balance text-neutral-800! md:text-[40px]!">
               {conteudo.campaign.title}
             </h1>
             <p className="max-w-[360px] text-[15px] leading-relaxed text-[#4a4542]">
@@ -224,7 +327,7 @@ export default function HomePage() {
             </p>
             <a
               href={conteudo.campaign.link || "#novidades"}
-              className="mt-1 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline md:w-auto"
+              className="mt-1 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline md:w-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#98263e]"
             >
               {conteudo.campaign.button}
             </a>
@@ -263,8 +366,8 @@ export default function HomePage() {
             {categorias.slice(0, 3).map((c) => (
               <a
                 key={c.nome}
-                href={"/category?q=" + c.nome.toLocaleLowerCase()}
-                className="group relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed] text-white! no-underline"
+                href={"/category?s=" + encodeURIComponent(c.nome)}
+                className="group relative block aspect-3/4 overflow-hidden rounded-md bg-[#f4efed] text-white! no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#98263e]"
               >
                 {c.foto && (
                   <img
@@ -293,16 +396,16 @@ export default function HomePage() {
         />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-10 md:py-11">
           <div className="flex flex-col gap-1.5">
-            <span className="text-xl font-medium md:text-[26px]">
+            <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-normal! text-balance text-neutral-800! md:text-[26px]!">
               {conteudo.banner.title}
-            </span>
+            </h2>
             <span className="text-sm text-[#4a4542] md:text-[15px]">
               {conteudo.banner.text}
             </span>
           </div>
           <a
             href={conteudo.banner.link || "#novidades"}
-            className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-medium tracking-wide text-neutral-800! no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#98263e]"
           >
             {conteudo.banner.button}
           </a>
@@ -316,31 +419,10 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="mx-auto flex w-full max-w-7xl flex-col items-center gap-2.5 px-4 py-14 text-center md:py-24">
-        <h2 className="m-0! font-[Prompt]! text-xl! font-medium! tracking-normal! text-neutral-800! md:text-2xl!">
-          {conteudo.newsletter.title}
-        </h2>
-        <p className="text-sm text-[#6b6461] md:text-[15px]">
-          {conteudo.newsletter.text}
-        </p>
-        <div className="mt-3 flex w-full max-w-[520px] flex-col gap-2.5 md:flex-row">
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            spellCheck={false}
-            aria-label="Seu e-mail"
-            placeholder="Seu melhor e-mail"
-            className="h-12 flex-1 rounded-full border border-[#e3c9c4] bg-white px-5 text-[15px] text-neutral-800 outline-none focus-visible:border-[#98263e] focus-visible:ring-2 focus-visible:ring-[#98263e]/15"
-          />
-          <button
-            type="button"
-            className="h-12 cursor-pointer rounded-full bg-[#f6bebf] px-7 text-sm font-medium tracking-wide text-neutral-800 hover:bg-[#f2aeb0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#98263e]"
-          >
-            CADASTRAR
-          </button>
-        </div>
-      </section>
+      <Newsletter
+        titulo={conteudo.newsletter.title}
+        texto={conteudo.newsletter.text}
+      />
     </div>
   );
 }
