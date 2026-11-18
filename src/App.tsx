@@ -1,26 +1,24 @@
-import type { ObjectId } from "bson";
 import {
   createContext,
+  lazy,
   type ReactNode,
+  Suspense,
   useEffect,
-  useReducer,
   useState,
 } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Footer from "./components/Footer.tsx";
 import Topbar from "./components/Topbar.tsx";
-import { test_p1, test_p2 } from "./database/Test.tsx";
 import ItemHandler from "./handlers/ItemHandler.tsx";
 import CartPage from "./pages/CartPage.tsx";
-import CheckoutPage from "./pages/CheckoutPage.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import OrdersPage from "./pages/OrdersPage.tsx";
 import ProductPage from "./pages/ProductPage.tsx";
-//import ClothesList from "./components/ClothesList.tsx";
 import SearchPage from "./pages/SearchPage.tsx";
-import { type ClothesModel, type DBState } from "./database/Schema.tsx";
+import { type DBState } from "./database/Schema.tsx";
 import { type UserModel } from "./database/Schema.tsx";
+const AdminPage = lazy(() => import("./pages/AdminPage.tsx"));
 
 export function saveToken(token: string) {
   localStorage.setItem("token", JSON.stringify(token));
@@ -194,12 +192,21 @@ export default function App() {
     ["/cart", <CartPage host={userToken as string} putState={putState} />],
     ["/orders", <OrdersPage host={userToken as string} />],
     ["/admin/items", <ItemHandler host={userToken as string} />],
+    [
+      "/painel/*",
+      <Suspense fallback={<p className="p-10">Carregando painel…</p>}>
+        <AdminPage host={userToken} />
+      </Suspense>,
+    ],
   ];
 
   return (
     <div className="max-w-dvw overflow-x-clip">
       <AuthContext value={userState}>
-        {!location.pathname.includes("login") && <Topbar host={userToken} />}
+        {!location.pathname.includes("login") &&
+          !location.pathname.startsWith("/painel") && (
+            <Topbar host={userToken} />
+          )}
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -252,7 +259,8 @@ export default function App() {
               ))}
           </Routes>
         </BrowserRouter>
-        {!location.pathname.includes("login") && <Footer />}
+        {!location.pathname.includes("login") &&
+          !location.pathname.startsWith("/painel") && <Footer />}
       </AuthContext>
     </div>
   );
