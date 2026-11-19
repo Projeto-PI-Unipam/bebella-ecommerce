@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import MBtn from "../assets/icons/menu-svg.svg";
+import { linkAtalho, TOP_SHORTCUTS } from "./Topbar.tsx";
 
 import "./Sidemenu.css";
 import "../assets/fonts/fonts.css";
@@ -94,6 +95,20 @@ export default function Sidemenu() {
             {"Busca por Departamentos"}
           </motion.p>
         </motion.div>
+        {isReady && (
+          <ul className="m-0 flex list-none flex-col p-0 pt-2 text-left">
+            {TOP_SHORTCUTS.map((li) => (
+              <li key={li.name}>
+                <a
+                  href={linkAtalho(li)}
+                  className="flex min-h-11 items-center px-5 font-[Prompt] text-base text-neutral-800! no-underline hover:bg-white/40"
+                >
+                  {li.name.toUpperCase()}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </motion.div>
     </>
   );
