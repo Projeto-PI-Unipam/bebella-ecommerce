@@ -9,6 +9,7 @@ export interface HomeContent {
     tag: string;
     title: string;
     text: string;
+    subtext: string;
     button: string;
     link: string;
     image: string;
@@ -21,10 +22,11 @@ export interface HomeContent {
 export const conteudo_padrao: HomeContent = {
   show_campaign: true,
   campaign: {
-    tag: "EM ESPERA",
-    title: "Em espera",
-    text: "Em espera",
-    button: "EM ESPERA",
+    tag: "",
+    title: "COLEÇÃO PRIMAVERA 2026",
+    text: "Leveza para os dias de sol",
+    subtext: "Vestidos e conjuntos em linho para usar nos dias e noites",
+    button: "CONFERIR",
     link: "",
     image: "",
   },

@@ -175,7 +175,7 @@ export class MongoDBConnection extends DurableObject<Env> {
       body: JSON.stringify({
         type: "online",
         external_reference: new UUID().toJSON(),
-        total_amount: sale.amount.toString(),
+        total_amount: (sale.amount + sale.address.cost).toString(),
         processing_mode: "manual",
         capture_mode: "automatic_async",
         config: {
@@ -191,11 +191,14 @@ export class MongoDBConnection extends DurableObject<Env> {
           email: buyer.email,
           phone: { area_code: phone_array[0], number: phone_array[1] },
         },
-        items: sale.products.map((p) => {
+        items: sale.products.map((p, i) => {
           return {
             title: `${p.item.brand}: ${p.item.name}`,
             quantity: p.amount,
-            unit_price: p.item.price.toString(),
+            unit_price:
+              i === 0
+                ? (p.item.price + sale.address.cost).toString()
+                : p.item.price.toString(),
             category_id: p.item.category.toLowerCase().replace(/\s/g, "_"),
           };
         }),
@@ -239,6 +242,7 @@ export class MongoDBConnection extends DurableObject<Env> {
           method: "GET",
         },
       );
+      console.log(sale_detes);
       if (sale_detes.ok) {
         const fmt_detes = await sale_detes.json();
         const new_sale = { ...sale, pay_state: fmt_detes };

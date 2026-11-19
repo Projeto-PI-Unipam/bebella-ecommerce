@@ -47,7 +47,6 @@ export default {
           mod?: string;
           cat?: string;
         } = await req.json();
-        console.log(body);
         const res = await db.get_items_lim(
           body.limit,
           body.page,
@@ -423,6 +422,7 @@ export default {
           const item_detes = await db
             .fetch_item(p.prod_id)
             .then((res: string) => {
+              console.log(res);
               const item_parsed = JSON.parse(res) as ClothingData;
               console.log(item_parsed);
               return {

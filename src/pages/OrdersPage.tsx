@@ -13,30 +13,32 @@ export default function OrdersPage({ host }: { host?: string }) {
   useEffect(() => {
     async function getOrders() {
       setOrders(test_sales);
-      /* const res = await fetch("/userapi/getorders", {
-        headers: { "Content-Type": "application/x-www-form-urlencoded",
-        },
+      const res = await fetch("/userapi/getorders", {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         method: "POST",
         body: new URLSearchParams({
-          token: host,
+          token: host!,
         }),
       });
       if (res.ok) {
         const prods: Array<WebSale> = await res.json();
         setOrders(prods);
+        console.log(prods);
+        return;
       } else {
         console.error(await res.json());
         console.error(res);
-      } */
+      }
     }
     getOrders();
-  }, [location.pathname, host]);
+  }, [location.pathname, window.location.href, host]);
+
   return (
     <div className="h-[85dvh] w-full lg:pl-[8dvw] lg:pr-[8dvw] lg:pt-[4dvh] lg:pb-[4dvh] flex flex-row justify-evenly overflow-x-hidden">
       <div className="flex flex-col overflow-y-scroll overflow-x-hidden gap-4">
         {orders?.map((order, index) => (
           <div
-            key={order.date ? order.date.valueOf() : index}
+            key={order.date ? order.date.valueOf() + index : index}
             className="lg:w-xl ml-8 lg:h-52 lg:min-h-52 min-h-40 h-40 lg:mr-24 bg-sky-100 flex flex-row items-center cursor-pointer transition hover:scale-102 duration-120 ease-out hover:bg-sky-200 rounded-2xl"
             onClick={() =>
               selectedOrder === order ? selectOrder(null) : selectOrder(order)
@@ -101,21 +103,23 @@ export default function OrdersPage({ host }: { host?: string }) {
           <div className="grid grid-cols-2 grid-flow-col-dense h-full w-full gap-x-4 gap-y-8">
             {selectedOrder.products.map((prod, index) => (
               <div
-                key={prod.item.db_id}
+                key={prod.item.db_id + index.toString()}
                 className="h-32 w-full rounded-lg bg-neutral-100 flex flex-row"
               >
-                <img
-                  alt="product-example"
-                  src={prod.item.pic_url[0]}
-                  className="h-32 w-32 aspect-square"
-                />
+                {prod.item.pic_url && (
+                  <img
+                    alt="product-example"
+                    src={prod.item.pic_url[0]}
+                    className="h-32 w-32 aspect-square"
+                  />
+                )}
                 <div className="w-full h-full flex flex-col items-start px-4">
-                  <span className="font-[Prompt] text-lg text-neutral-800">
+                  <span className="font-[Prompt] text-base text-neutral-800">
                     {`${prod.item.name} (${prod.size})`}
                   </span>
                   <span className="font-[Prompt] mt-1 text-sm text-neutral-600">{`Quantidade: ${prod.amount}`}</span>
                   <span className="font-[Prompt] text-sm text-neutral-600">{`Valor Unitário: ${prod.item.price}`}</span>
-                  <span className="font-[Prompt] text-base text-neutral-800 self-end mt-7 ml-2">{`Valor Total: ${to_currency(prod.amount * prod.item.price)}`}</span>
+                  <span className="font-[Prompt] text-sm text-neutral-800 self-end mt-7 ml-2">{`Valor Total: ${to_currency(prod.amount * prod.item.price)}`}</span>
                 </div>
               </div>
             ))}

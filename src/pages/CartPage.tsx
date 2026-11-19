@@ -14,6 +14,23 @@ import {
 } from "../database/Schema.tsx";
 import { ObjectId } from "bson";
 import { AuthContext } from "../App.tsx";
+import clsx from "clsx";
+
+const test_costs = [
+  { name: "PAC", price: 18.99, tstart: 9, tend: 16 },
+  { name: "SEDEX", price: 38.9, tstart: 4, tend: 7 },
+];
+
+const test_addy: ShippingAddress = {
+  city: "Patos de Minas",
+  state: "MG",
+  phone: 34998752310,
+  number: 2,
+  street: "Rua Gabriel Pereira",
+  receiver: "José",
+  zip_code: 38700054,
+  complement: "Ap 301",
+};
 
 export default function CartPage({
   host,
@@ -28,10 +45,11 @@ export default function CartPage({
   const [shipZip, setZip] = useState<number | null>(null);
   const [address, setAddress] = useState<ShippingAddress | null>(
     !user || !user?.order_addresses || !user?.order_addresses?.length
-      ? null
+      ? /*null*/ test_addy
       : user!.order_addresses![0],
   );
   const [toggle, toggleEffect] = useState<boolean>(false);
+  const [chosenShipping, setShipping] = useState<any>();
 
   const cartTotal = !cartItems
     ? 0.0
@@ -112,6 +130,49 @@ export default function CartPage({
       }
     },
   );
+
+  const doCheckout = useEffectEvent(async () => {
+    if (cartItems === null || !chosenShipping) {
+      return;
+    }
+    const items_mapped = cartItems!.map((c) => {
+      return { prod_id: c.item._id, quantity: c.amount, size: c.size };
+    });
+    const checkout_fetch = async () =>
+      await fetch("/userapi/checkout", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          products: items_mapped,
+          user: host,
+          address: { ...address, cost: chosenShipping.price },
+        }),
+      });
+    let initial_res = await checkout_fetch();
+    let fmt_res: any;
+    const checkout_test = async () => {
+      if (initial_res.ok) {
+        const jres = await initial_res.json();
+        fmt_res = jres;
+      } else {
+        if ((await initial_res.text()).includes("generate a response")) {
+          initial_res = await checkout_fetch();
+          await checkout_test();
+        } else {
+          console.error(initial_res);
+          return;
+        }
+      }
+    };
+    await checkout_test();
+    console.log(fmt_res);
+    if (fmt_res) {
+      location.replace(fmt_res.checkout_url);
+    }
+    return;
+  });
 
   return (
     <div className="font-[Prompt] text-neutral-800 tracking-normal! text-left mb-20 min-h-[62dvh]">
@@ -194,30 +255,41 @@ export default function CartPage({
                   {"Informe seu CEP para ver as opções de entrega disponíveis"}
                 </p>
                 <div className="carrinho-cep">
-                  <input type="text" placeholder="Digite seu CEP" />
+                  <input
+                    type="text"
+                    placeholder="Digite seu CEP"
+                    value={shipZip ? shipZip.toString() : ""}
+                    onChange={(ev) => setZip(parseInt(ev.target.value))}
+                  />
                   <button type="button">{"CALCULAR"}</button>
                 </div>
                 <p>{"Não sabe seu CEP? Consulte aqui"}</p>
               </div>
-              <div className="carrinho-opcoes">
-                <h2>{"Frete para 00000-000"}</h2>
-                <div className="carrinho-opcao">
-                  <span className="carrinho-radio ativo" />
-                  <div>
-                    <span>{`PAC`}</span>
-                    <small>{`0 a 0 dias úteis`}</small>
-                  </div>
-                  <span>{`R$00,00`}</span>
+              {shipZip && shipZip.toString().length > 7 && (
+                <div className="carrinho-opcoes">
+                  <h2>{`Frete para ${shipZip}`}</h2>
+                  {test_costs.map((sh) => (
+                    <div
+                      className="carrinho-opcao cursor-pointer"
+                      onClick={() => setShipping(sh)}
+                    >
+                      <span
+                        className={clsx(
+                          "carrinho-radio transition hover:scale-107 duration-110 ease-in cursor-pointer",
+                          chosenShipping &&
+                            chosenShipping.name === sh.name &&
+                            "scale-107 ativo",
+                        )}
+                      />
+                      <div>
+                        <span>{sh.name}</span>
+                        <small>{`${sh.tstart} a ${sh.tend} dias úteis`}</small>
+                      </div>
+                      <span>{to_currency(sh.price)}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="carrinho-opcao">
-                  <span className="carrinho-radio" />
-                  <div>
-                    <span>{`SEDEX`}</span>
-                    <small>{`0 a 0 dias úteis`}</small>
-                  </div>
-                  <span>{`R$00,00`}</span>
-                </div>
-              </div>
+              )}
             </div>
 
             {false && (
@@ -244,21 +316,21 @@ export default function CartPage({
             </div>
             <div className="carrinho-resumo-linha">
               <span>{`Frete`}</span>
-              <span>{to_currency(shipCost || 0)}</span>
+              <span>{to_currency(chosenShipping?.price || 0)}</span>
             </div>
             <div className="carrinho-total">
               <div className="carrinho-resumo-linha">
                 <strong>{`TOTAL`}</strong>
-                <strong>{to_currency(cartTotal + (shipCost || 0))}</strong>
+                <strong>
+                  {to_currency(cartTotal + (chosenShipping?.price || 0))}
+                </strong>
               </div>
               <small>{`em até ${def_installments}x sem juros no cartão`}</small>
             </div>
             <button
               type="button"
               className="carrinho-finalizar"
-              onClick={() =>
-                window.location.assign(window.location.origin + "/checkout")
-              }
+              onClick={() => doCheckout()}
             >
               {"FINALIZAR COMPRA"}
             </button>

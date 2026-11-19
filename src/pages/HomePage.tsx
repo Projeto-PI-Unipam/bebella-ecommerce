@@ -1,5 +1,5 @@
 import patternBg from "../assets/img/pattern_cut.png";
-import { type ClothesModel, to_currency } from "../database/Schema.tsx";
+import { type ClothesModel, to_currency, bucket } from "../database/Schema.tsx";
 import {
   conteudo_padrao,
   desconto_pix,
@@ -314,7 +314,7 @@ export default function HomePage() {
       <FaixaBeneficios beneficios={conteudo.benefits} />
 
       {conteudo.show_campaign && (
-        <section className="flex w-full flex-col bg-[#f8eeeb] md:h-[440px] md:flex-row">
+        <section className="flex w-full flex-col bg-[#f8eeeb] md:h-130 md:flex-row">
           <div className="flex flex-col items-start justify-center gap-3.5 px-4 py-7 md:w-[38%] md:px-12 md:py-10 lg:px-16">
             <span className="text-xs tracking-[0.12em] text-[#6b3a44] md:text-[13px]">
               {conteudo.campaign.tag}
@@ -322,8 +322,11 @@ export default function HomePage() {
             <h1 className="m-0! font-[Prompt]! text-3xl! leading-tight! font-medium! tracking-normal! text-balance text-neutral-800! md:text-[40px]!">
               {conteudo.campaign.title}
             </h1>
-            <p className="max-w-[360px] text-[15px] leading-relaxed text-[#4a4542]">
+            <p className="max-w-100 indent-1 text-3xl font-[Boston_Angel] leading-normal text-[#4a4542]">
               {conteudo.campaign.text}
+            </p>
+            <p className="max-w-90 text-lg indent-1 leading-relaxed text-[#4a4542]">
+              {conteudo.campaign.subtext}
             </p>
             <a
               href={conteudo.campaign.link || "#novidades"}
@@ -332,19 +335,13 @@ export default function HomePage() {
               {conteudo.campaign.button}
             </a>
           </div>
-          <div className="relative order-first h-[340px] md:order-none md:h-full md:w-[62%]">
-            {fotoCampanha ? (
-              <img
-                src={fotoCampanha}
-                alt={conteudo.campaign.title}
-                fetchPriority="high"
-                className="absolute inset-0 h-full w-full object-cover object-[50%_8%]"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#e8d9cc] px-6 text-center text-sm text-[#6b6461]">
-                Em espera
-              </div>
-            )}
+          <div className="relative order-first h-100 md:order-none md:h-full md:w-[62%]">
+            <img
+              src={bucket + "/main.jpeg"}
+              alt={conteudo.campaign.title}
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover object-[50%_75%]"
+            />
           </div>
         </section>
       )}

@@ -471,9 +471,9 @@ export default function LoginPage({
               <button
                 type="button"
                 onClick={createUser}
-                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
+                className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800 transition duration-110 ease-in hover:scale-110 cursor-pointer"
               >
-                Criar conta
+                {"Criar conta".toUpperCase()}
               </button>
             </div>
           </div>
