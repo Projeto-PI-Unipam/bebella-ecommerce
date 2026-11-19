@@ -10,7 +10,7 @@ import { useContext, useState } from "react";
 import clsx from "clsx";
 
 export const TOP_SHORTCUTS = [
-  { name: "Primavera!", type: "recent" },
+  { name: "Primavera", type: "recent" },
   { name: "Novidades", type: "highlight" },
   { name: "Vestidos", type: "category" },
   { name: "Conjuntos", type: "category" },
@@ -71,7 +71,7 @@ function Topbar({ host }: { host: string | null }) {
             >
               <span
                 key={ind}
-                className={`${li.type === "recent" ? "text-rose-700" : li.type === "highlight" ? "text-neutral-900 font-medium" : "text-neutral-800"} font-[Prompt]`}
+                className={`${li.type === "recent" ? "text-[#98263e]" : li.type === "highlight" ? "text-neutral-900 font-medium" : "text-neutral-800"} font-[Prompt]`}
               >
                 {li.name.toUpperCase()}
               </span>
