@@ -2,6 +2,7 @@ import BSmall from "../assets/icons/logo-png.png";
 import { ShoppingCartIcon } from "@phosphor-icons/react/dist/csr/ShoppingCart";
 import { UserIcon } from "@phosphor-icons/react/dist/csr/User";
 import { HeartIcon } from "@phosphor-icons/react/dist/csr/Heart";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/csr/MagnifyingGlass";
 import Sidemenu from "./Sidemenu.tsx";
 import { AuthContext } from "../App.tsx";
 
@@ -79,11 +80,23 @@ function Topbar({ host }: { host: string | null }) {
           ))}
         </div>
 
-        <div className="bg-neutral-100 lg:w-[26%] xl:w-1/3 h-3/4 rounded-4xl items-center pl-1 pr-1 flex cursor-text lg:visible collapse">
+        <div className="bg-neutral-100 lg:w-[26%] xl:w-1/3 h-3/4 rounded-4xl items-center pl-4 pr-4 gap-2 flex cursor-text focus-within:ring-2 focus-within:ring-[#98263e]/40 lg:visible collapse">
+          <MagnifyingGlassIcon
+            size={20}
+            color="#737373"
+            className="flex-none cursor-pointer"
+            aria-label="Buscar"
+            onClick={() => {
+              if (searchText.length >= 3) {
+                location.href = location.origin + `/search?s=${searchText}`;
+              }
+            }}
+          />
           <input
             type="text"
-            className="w-full h-85/100 bg-transparent rounded-4xl border-none items-center content-center justify-start text-neutral-800 font-[Prompt] font-light text-xl indent-1"
-            placeholder=" "
+            aria-label="Buscar produtos"
+            className="w-full h-85/100 bg-transparent rounded-4xl border-none outline-none items-center content-center justify-start text-neutral-800 font-[Prompt] font-light text-lg placeholder:text-neutral-500"
+            placeholder="Buscar produtos"
             onChange={(input) => setSearch(input.target.value)}
             onKeyDown={(keyEvent) => {
               if (keyEvent.key === "Enter" && searchText.length >= 3) {
