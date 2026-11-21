@@ -54,7 +54,11 @@
 }
 
 .produto-info h1 {
+	font-family: "Prompt", sans-serif;
 	font-size: 1.875rem;
+	font-weight: 400;
+	line-height: 1.25;
+	letter-spacing: normal;
 }
 
 .produto-preco-bloco {
