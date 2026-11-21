@@ -285,7 +285,7 @@ export default function ProductPage({
 
             {item && item.description && (
               <div className="produto-descricao">
-                <h2>SOBRE ESSE PRODUTO</h2>
+                <h2>Sobre esse produto</h2>
                 <p>{item!.description!}</p>
               </div>
             )}
