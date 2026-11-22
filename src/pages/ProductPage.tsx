@@ -18,6 +18,7 @@ import {
   def_installments,
 } from "../database/Schema.tsx";
 import { ObjectId } from "bson";
+import { CheckIcon } from "@phosphor-icons/react/dist/csr/Check";
 import ProductCard from "../components/ProductCard.tsx";
 
 interface Suggestions {
@@ -304,11 +305,16 @@ export default function ProductPage({
               type="button"
               className="produto-adicionar"
             >
-              {buttonDisplay === "pending"
-                ? "..."
-                : buttonDisplay === "added"
-                  ? "ADICIONADO!"
-                  : "ADICIONAR AO CARRINHO"}
+              {buttonDisplay === "pending" ? (
+                "..."
+              ) : buttonDisplay === "added" ? (
+                <span className="inline-flex items-center gap-2">
+                  <CheckIcon size={16} weight="bold" color="#98263e" />
+                  ADICIONADO AO CARRINHO
+                </span>
+              ) : (
+                "ADICIONAR AO CARRINHO"
+              )}
             </button>
 
             {item && item.description && (
