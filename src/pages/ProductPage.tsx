@@ -36,6 +36,8 @@ export default function ProductPage({
   const [item, setItem] = useState<ClothesModel | null>(null);
   const [suggestions, setSuggests] = useState<Suggestions | null>(null);
   const [chosenSize, setSize] = useState<size | null>(null);
+  const [faltaTamanho, setFaltaTamanho] = useState<boolean>(false);
+  const [erroCarrinho, setErroCarrinho] = useState<boolean>(false);
   const [pictureIndex, setPicture] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
   const [buttonDisplay, setButton] = useState<string>("normal");
@@ -114,7 +116,11 @@ export default function ProductPage({
   const user = useContext(AuthContext);
 
   const cart_put = useEffectEvent(async (irProCarrinho: boolean) => {
-    if (!chosenSize || !quantity || !item) {
+    if (!chosenSize) {
+      setFaltaTamanho(true);
+      return;
+    }
+    if (!quantity || !item) {
       return;
     }
     if (!host || !user) {
@@ -123,6 +129,7 @@ export default function ProductPage({
       );
       return;
     }
+    setErroCarrinho(false);
     setButton(irProCarrinho ? "indo" : "pending");
     const cart_prod: CartItem = {
       _id: new ObjectId(),
@@ -154,6 +161,8 @@ export default function ProductPage({
       setButton("normal");
     } else {
       console.error(res);
+      setButton("normal");
+      setErroCarrinho(true);
     }
   });
 
@@ -228,7 +237,10 @@ export default function ProductPage({
                 {item!.size_data.map((s) => (
                   <div
                     key={s}
-                    onClick={() => setSize(s)}
+                    onClick={() => {
+                      setSize(s);
+                      setFaltaTamanho(false);
+                    }}
                     className={clsx(
                       "flex items-center justify-center w-10 h-10 border border-solid border-[#f5f5f5] rounded-md bg-[#f5f5f5] cursor-pointer transition ease-in duration-75",
                       chosenSize === s
@@ -240,6 +252,11 @@ export default function ProductPage({
                   </div>
                 ))}
               </div>
+              {faltaTamanho && (
+                <p className="text-sm text-[#98263e]">
+                  Escolha um tamanho pra continuar.
+                </p>
+              )}
             </div>
 
             {false && (
@@ -316,6 +333,11 @@ export default function ProductPage({
                 "ADICIONAR AO CARRINHO"
               )}
             </button>
+            {erroCarrinho && (
+              <p className="-mt-2 text-sm text-[#98263e]">
+                Não deu pra colocar no carrinho. Tente de novo.
+              </p>
+            )}
 
             {item && item.description && (
               <div className="produto-descricao">
