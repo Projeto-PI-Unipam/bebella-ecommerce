@@ -1,4 +1,9 @@
-import { type ClothesModel, to_currency } from "../database/Schema.tsx";
+import {
+  type ClothesModel,
+  def_installments,
+  to_currency,
+  upfront_discount,
+} from "../database/Schema.tsx";
 
 export default function ProductCard({ item }: { item: ClothesModel }) {
   return (
@@ -22,6 +27,13 @@ export default function ProductCard({ item }: { item: ClothesModel }) {
         </span>
         <span className="font-[Prompt] text-base font-medium">
           {to_currency(item.price)}
+        </span>
+        <span className="font-[Prompt] text-[13px] font-medium text-[#98263e]">
+          {to_currency(item.price * (1 - upfront_discount))} no Pix
+        </span>
+        <span className="font-[Prompt] text-[13px] text-[#6b6461]">
+          ou {def_installments}x de {to_currency(item.price / def_installments)}{" "}
+          sem juros
         </span>
       </div>
     </div>

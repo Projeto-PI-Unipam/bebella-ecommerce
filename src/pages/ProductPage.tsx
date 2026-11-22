@@ -320,9 +320,11 @@ export default function ProductPage({
               <h2 className="text-2xl">{"NOVIDADES"}</h2>
               <span
                 className="text-sm text-rose-400 cursor-pointer transition hover:scale-110"
-                onClick={() => window.location.assign(window.location.origin)}
+                onClick={() =>
+                  window.location.assign(window.location.origin + "/#novidades")
+                }
               >
-                {"PÁGINA INICIAL"}
+                {"VER TUDO"}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
