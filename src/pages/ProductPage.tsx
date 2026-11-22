@@ -294,8 +294,8 @@ export default function ProductPage({
       </div>
 
       {suggestions && (
-        <>
-          <div className="pl-6 pr-6 mt-20">
+        <div className="produto-conteudo">
+          <div className="mt-20">
             <div className="flex justify-between items-baseline mb-6">
               <h2 className="text-2xl">{"RELACIONADOS"}</h2>
               <span
@@ -309,13 +309,13 @@ export default function ProductPage({
                 {"VER CATEGORIA"}
               </span>
             </div>
-            <div className="w-full h-auto flex flex-row items-center justify-start gap-6">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
               {suggestions.related.map((sg) => (
                 <ProductCard item={sg} key={sg._id.toString()} />
               ))}
             </div>
           </div>
-          <div className="pb-0 pl-6 pr-6 mt-20">
+          <div className="pb-0 mt-20">
             <div className="flex justify-between items-baseline mb-6">
               <h2 className="text-2xl">{"NOVIDADES"}</h2>
               <span
@@ -325,13 +325,13 @@ export default function ProductPage({
                 {"PÁGINA INICIAL"}
               </span>
             </div>
-            <div className="w-full h-auto flex flex-row items-center justify-start gap-6">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
               {suggestions.newest.map((sg) => (
                 <ProductCard item={sg} key={sg._id.toString()} />
               ))}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

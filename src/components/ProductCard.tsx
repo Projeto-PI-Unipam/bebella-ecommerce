@@ -4,33 +4,25 @@ export default function ProductCard({ item }: { item: ClothesModel }) {
   return (
     <div
       key={item.db_id}
-      className="inline-flex flex-col w-96 h-118 rounded-2xl bg-rose-100 object-cover"
+      className="flex w-full min-w-0 cursor-pointer flex-col gap-3 self-start text-neutral-800"
       onClick={() =>
         location.assign(location.origin + "/product/" + item.db_id)
       }
     >
-      <div className="flex w-full h-10/11 rounded-t-2xl justify-center content-center items-start overflow-hidden">
-        <ul className="w-full h-full overflow-hidden">
-          <li className="w-full h-full overflow-hidden">
-            <img
-              className="inline-block w-full h-auto rounded-t-2xl self-start justify-center overflow-hidden object-cover"
-              alt="product-showcase"
-              src={"https://cdn.bebellaboutique.com/" + item.pic_url![0]}
-            />
-          </li>
-        </ul>
+      <div className="aspect-3/4 w-full overflow-hidden rounded-md bg-[#f4efed]">
+        <img
+          className="h-full w-full object-cover transition-transform duration-300 motion-safe:hover:scale-[1.03]"
+          alt={item.name}
+          src={"https://cdn.bebellaboutique.com/" + item.pic_url![0]}
+        />
       </div>
-      <div className="flex flex-row w-full h-2/11 rounded-b-2xl">
-        <div className="w-2/3 h-full flex flex-col rounded-bl-2xl overflow-hidden content-center justify-center">
-          <span className="h-full text-pretty font-[Prompt] text-center self-start p-4 pt-5 text-lg text-neutral-800 text-ellipsis">
-            {item.name}
-          </span>
-        </div>
-        <div className="w-1/3 h-full flex flex-col justify-center content-center rounded-br-2xl">
-          <span className="h-full text-pretty font-[Prompt] self-end text-center p-4 pt-5 text-lg text-neutral-800">
-            {to_currency(item.price)}
-          </span>
-        </div>
+      <div className="flex flex-col gap-1 text-left">
+        <span className="line-clamp-2 min-h-[2lh] font-[Prompt] text-[15px] leading-snug">
+          {item.name}
+        </span>
+        <span className="font-[Prompt] text-base font-medium">
+          {to_currency(item.price)}
+        </span>
       </div>
     </div>
   );
