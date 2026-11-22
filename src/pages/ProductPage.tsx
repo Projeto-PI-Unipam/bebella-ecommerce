@@ -112,7 +112,7 @@ export default function ProductPage({
 
   const user = useContext(AuthContext);
 
-  const cart_put = useEffectEvent(async () => {
+  const cart_put = useEffectEvent(async (irProCarrinho: boolean) => {
     if (!chosenSize || !quantity || !item) {
       return;
     }
@@ -122,7 +122,7 @@ export default function ProductPage({
       );
       return;
     }
-    setButton("pending");
+    setButton(irProCarrinho ? "indo" : "pending");
     const cart_prod: CartItem = {
       _id: new ObjectId(),
       item: item!,
@@ -144,6 +144,10 @@ export default function ProductPage({
         type: "add_cart",
         data: cart_prod,
       });
+      if (irProCarrinho) {
+        location.assign(location.origin + "/cart");
+        return;
+      }
       setButton("added");
       await new Promise((r) => setTimeout(r, 10000));
       setButton("normal");
@@ -281,18 +285,13 @@ export default function ProductPage({
                 </span>
               </div>
               <button
-                onClick={() => cart_put()}
+                onClick={() => cart_put(true)}
                 type="button"
                 className="produto-comprar"
               >
-                {buttonDisplay === "normal"
-                  ? "COMPRAR"
-                  : buttonDisplay === "pending"
-                    ? "..."
-                    : "ADICIONADO!"}
+                {buttonDisplay === "indo" ? "..." : "COMPRAR"}
               </button>
             </div>
-
             {quantity >= item!.in_stock && (
               <p className="-mt-3 text-sm text-[#98263e]">
                 {item!.in_stock === 1
@@ -300,6 +299,17 @@ export default function ProductPage({
                   : `Só temos ${item!.in_stock} unidades em estoque.`}
               </p>
             )}
+            <button
+              onClick={() => cart_put(false)}
+              type="button"
+              className="produto-adicionar"
+            >
+              {buttonDisplay === "pending"
+                ? "..."
+                : buttonDisplay === "added"
+                  ? "ADICIONADO!"
+                  : "ADICIONAR AO CARRINHO"}
+            </button>
 
             {item && item.description && (
               <div className="produto-descricao">

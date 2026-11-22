@@ -131,7 +131,8 @@
 .produto-tamanho,
 .produto-cor,
 .produto-quantidade span,
-.produto-comprar {
+.produto-comprar,
+.produto-adicionar {
 	cursor: pointer;
 }
 
@@ -220,4 +221,22 @@
 	.produto-grade {
 		grid-template-columns: repeat(2, 1fr);
 	}
+}
+
+.produto-adicionar {
+	width: 100%;
+	height: 2.75rem;
+	margin-top: -0.5rem;
+	border: 1px solid #f6bebf;
+	border-radius: 6px;
+	background: #fff;
+	color: #222;
+	font-family: inherit;
+	font-size: 0.875rem;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+}
+
+.produto-adicionar:hover {
+	background: #fdf1f1;
 }
