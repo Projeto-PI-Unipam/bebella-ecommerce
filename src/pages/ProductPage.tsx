@@ -254,7 +254,12 @@ export default function ProductPage({
               <div className="produto-quantidade">
                 <span
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="text-2xl text-center w-11 hover:text-rose-400 text-neutral-800 select-none"
+                  className={clsx(
+                    "text-2xl text-center w-11 select-none",
+                    quantity <= 1
+                      ? "text-neutral-300 cursor-default!"
+                      : "hover:text-rose-400 text-neutral-800",
+                  )}
                 >
                   {"-"}
                 </span>
@@ -265,7 +270,12 @@ export default function ProductPage({
                   onClick={() =>
                     setQuantity(Math.min(quantity + 1, item!.in_stock))
                   }
-                  className="text-2xl text-center w-11 hover:text-rose-400 text-neutral-800 select-none"
+                  className={clsx(
+                    "text-2xl text-center w-11 select-none",
+                    quantity >= item!.in_stock
+                      ? "text-neutral-300 cursor-default!"
+                      : "hover:text-rose-400 text-neutral-800",
+                  )}
                 >
                   {"+"}
                 </span>
@@ -282,6 +292,14 @@ export default function ProductPage({
                     : "ADICIONADO!"}
               </button>
             </div>
+
+            {quantity >= item!.in_stock && (
+              <p className="-mt-3 text-sm text-[#98263e]">
+                {item!.in_stock === 1
+                  ? "Só temos 1 unidade em estoque."
+                  : `Só temos ${item!.in_stock} unidades em estoque.`}
+              </p>
+            )}
 
             {item && item.description && (
               <div className="produto-descricao">
