@@ -284,12 +284,12 @@ export default function LoginPage({
             </h1>
 
             <p className="font-[Prompt] text-[calc(1rem+0.5svh)] font-medium text-black">
-              digite um e-mail para continuar
+              Digite um e-mail para continuar
             </p>
 
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="font-[Prompt] text-black">
-                e-mail*
+                E-mail*
               </label>
               <input
                 id="email"
@@ -342,7 +342,7 @@ export default function LoginPage({
                 onClick={voltarParaEmail}
                 className="pl-2 font-[Prompt] text-[#f6bebf] underline transition ease-in duration-110 hover:scale-107 cursor-pointer"
               >
-                {"(alterar)"}
+                {"Alterar"}
               </button>
             </p>
 
@@ -359,7 +359,7 @@ export default function LoginPage({
                 onClick={() => toggleShow(!showPass)}
                 className="absolute top-1/2 right-3 -translate-y-1/2 font-[Prompt] text-sm text-neutral-600"
               >
-                {showPass ? "ocultar" : "mostrar"}
+                {showPass ? "Ocultar" : "Mostrar"}
               </button>
             </div>
 
@@ -371,7 +371,7 @@ export default function LoginPage({
               }}
               className="self-start font-[Prompt] text-black underline"
             >
-              esqueceu sua senha?
+              Esqueceu sua senha?
             </button>
 
             {erro && (
@@ -396,7 +396,7 @@ export default function LoginPage({
             </h1>
 
             <p className="font-[Prompt] text-black">
-              {"enviamos um código para"}
+              {"Enviamos um código para"}
               <br />
               {email}
               <button
@@ -404,14 +404,14 @@ export default function LoginPage({
                 onClick={voltarParaEmail}
                 className="pl-2 font-[Prompt] text-[#f6bebf] underline transition duration-110 ease-in hover:scale-107 cursor-pointer"
               >
-                {"(alterar)"}
+                {"Alterar"}
               </button>
             </p>
 
             <div className="flex gap-4 justify-between">
               <div className="flex flex-col items-start gap-1">
                 <input
-                  placeholder="código"
+                  placeholder="Código"
                   value={codigo}
                   onChange={(e) => setCodigo(e.target.value)}
                   className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -421,13 +421,13 @@ export default function LoginPage({
                   className="font-[Prompt] text-sm text-black underline cursor-pointer transition duration-110 hover:scale-107 ease-in"
                   onClick={() => sendMail("new")}
                 >
-                  {"reenviar código"}
+                  {"Reenviar código"}
                 </button>
               </div>
 
               <input
                 type={showPass ? "text" : "password"}
-                placeholder="senha*"
+                placeholder="Senha*"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 pr-24 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -436,13 +436,13 @@ export default function LoginPage({
 
             <div className="flex gap-4">
               <input
-                placeholder="nome*"
+                placeholder="Nome*"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
               />
               <input
-                placeholder="sobrenome*"
+                placeholder="Sobrenome*"
                 value={sobrenome}
                 onChange={(e) => setSobrenome(e.target.value)}
                 className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -451,7 +451,7 @@ export default function LoginPage({
 
             <div className="flex flex-col gap-1">
               <label htmlFor="nascimento" className="font-[Prompt] text-black">
-                data de nascimento*
+                Data de nascimento*
               </label>
               <input
                 id="nascimento"
@@ -486,7 +486,7 @@ export default function LoginPage({
             </h1>
 
             <p className="font-[Prompt] text-black">
-              {"enviamos um código para"}
+              {"Enviamos um código para"}
               <br />
               {email}
               <button
@@ -494,13 +494,13 @@ export default function LoginPage({
                 onClick={voltarParaEmail}
                 className="pl-2 font-[Prompt] text-[#f6bebf] underline transition ease-in duration-110 hover:scale-107 cursor-pointer"
               >
-                {"(alterar)"}
+                {"Alterar"}
               </button>
             </p>
 
             <div className="flex flex-col items-start gap-1">
               <input
-                placeholder="código"
+                placeholder="Código"
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
                 className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -509,13 +509,13 @@ export default function LoginPage({
                 type="button"
                 className="font-[Prompt] text-sm text-black underline"
               >
-                reenviar código
+                Reenviar código
               </button>
             </div>
 
             <input
               type="password"
-              placeholder="nova senha*"
+              placeholder="Nova senha*"
               value={novaSenha}
               onChange={(e) => setNovaSenha(e.target.value)}
               className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -523,7 +523,7 @@ export default function LoginPage({
 
             <input
               type="password"
-              placeholder="confirmar senha*"
+              placeholder="Confirmar senha*"
               value={confirmaSenha}
               onChange={(e) => setConfirmaSenha(e.target.value)}
               className="box-border h-[calc(1.5rem+3svh)] w-full rounded-xl border border-[#f6bebf] bg-white px-3 font-[Prompt] text-[calc(0.75rem+1svh)] text-black outline-none"
@@ -539,7 +539,7 @@ export default function LoginPage({
                 onClick={salvarSenha}
                 className="h-12 rounded-2xl border-2 border-[#f6bebf] bg-[#f6bebf] px-6 font-[Prompt] font-medium text-neutral-800"
               >
-                salvar
+                {"Salvar".toUpperCase()}
               </button>
             </div>
           </div>
