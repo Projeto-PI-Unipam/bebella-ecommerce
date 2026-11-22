@@ -94,12 +94,6 @@ export default function CartPage({
       if (!item) {
         return;
       }
-      if (change === "increase" && item.amount >= item.item.in_stock) {
-        return;
-      }
-      if (change === "decrease" && item.amount <= 1) {
-        return;
-      }
       let new_cart: CartItem[] = [];
       if (change === "increase") {
         item.amount += 1;
@@ -227,10 +221,6 @@ export default function CartPage({
                         onClick={() =>
                           changeCart("decrease", prod.item._id.toString())
                         }
-                        className={clsx(
-                          prod.amount <= 1 &&
-                            "text-neutral-300 cursor-default!",
-                        )}
                       >
                         {"-"}
                       </span>
@@ -239,21 +229,10 @@ export default function CartPage({
                         onClick={() =>
                           changeCart("increase", prod.item._id.toString())
                         }
-                        className={clsx(
-                          prod.amount >= prod.item.in_stock &&
-                            "text-neutral-300 cursor-default!",
-                        )}
                       >
                         {"+"}
                       </span>
                     </div>
-                    {prod.amount >= prod.item.in_stock && (
-                      <span className="text-sm text-[#98263e]">
-                        {prod.item.in_stock === 1
-                          ? "Só temos 1 unidade em estoque."
-                          : `Só temos ${prod.item.in_stock} unidades em estoque.`}
-                      </span>
-                    )}
                   </div>
                   <TrashIcon
                     className="carrinho-lixeira"
